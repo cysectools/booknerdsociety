@@ -1,11 +1,18 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { Search, Star, Flame, BookOpen, Users, MessageCircle } from 'lucide-react'
 import BookSearch from '../components/BookSearch'
 import RecommendedBooks from '../components/RecommendedBooks'
 import TrendingClubs from '../components/TrendingClubs'
 
 export default function Home() {
+  const navigate = useNavigate()
+
+  const handleExploreClick = () => {
+    navigate('/books')
+  }
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -27,11 +34,30 @@ export default function Home() {
             </p>
             <motion.button
               whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="btn-primary text-lg px-8 py-4"
+              whileTap={{ 
+                scale: 0.95,
+                rotateY: 5,
+                transition: { duration: 0.1 }
+              }}
+              onClick={handleExploreClick}
+              className="btn-primary text-lg px-8 py-4 relative overflow-hidden group"
             >
-              <BookOpen className="inline h-5 w-5 mr-2" />
-              Explore Now
+              <motion.div
+                className="flex items-center"
+                whileTap={{
+                  rotateY: 10,
+                  transition: { duration: 0.2 }
+                }}
+              >
+                <BookOpen className="inline h-5 w-5 mr-2" />
+                Explore Now
+              </motion.div>
+              <motion.div
+                className="absolute inset-0 bg-white/20"
+                initial={{ x: '-100%' }}
+                whileTap={{ x: '100%' }}
+                transition={{ duration: 0.3 }}
+              />
             </motion.button>
           </motion.div>
         </div>

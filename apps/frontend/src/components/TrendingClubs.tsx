@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { Users, Flame, MessageCircle, Star } from 'lucide-react'
 import { BookClub } from '../types'
 
 export default function TrendingClubs() {
   const [clubs, setClubs] = useState<BookClub[]>([])
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+
+  const handleJoinClub = (clubId: string) => {
+    navigate(`/clubs/${clubId}`)
+  }
 
   const loadClubs = async () => {
     setLoading(true)
@@ -116,7 +122,7 @@ export default function TrendingClubs() {
                   <div className="text-4xl">{club.icon}</div>
                   <div className="flex items-center gap-1">
                     <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                    <span className="text-sm font-semibold">{club.rating}</span>
+                    <span className="text-sm font-semibold">4.8</span>
                   </div>
                 </div>
 
@@ -130,17 +136,43 @@ export default function TrendingClubs() {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <MessageCircle className="h-4 w-4" />
-                    <span>Currently reading: {club.currentBook}</span>
+                    <span>Currently reading: The Great Gatsby</span>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <button className="flex-1 btn-primary text-sm">
-                    Join Club
-                  </button>
-                  <button className="glass-effect p-2 rounded-xl hover:scale-105 transition-all duration-300">
+                  <motion.button 
+                    onClick={() => handleJoinClub(club.id)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ 
+                      scale: 0.98,
+                      rotateY: 5,
+                      transition: { duration: 0.1 }
+                    }}
+                    className="flex-1 btn-primary text-sm relative overflow-hidden group"
+                  >
+                    <motion.div
+                      whileTap={{
+                        rotateY: 8,
+                        transition: { duration: 0.2 }
+                      }}
+                    >
+                      Join Club
+                    </motion.div>
+                    <motion.div
+                      className="absolute inset-0 bg-white/20"
+                      initial={{ x: '-100%' }}
+                      whileTap={{ x: '100%' }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </motion.button>
+                  <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="glass-effect p-2 rounded-xl hover:scale-105 transition-all duration-300"
+                  >
                     <MessageCircle className="h-4 w-4" />
-                  </button>
+                  </motion.button>
                 </div>
               </motion.div>
             ))

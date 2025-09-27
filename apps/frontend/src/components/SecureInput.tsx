@@ -9,6 +9,7 @@ interface SecureInputProps {
   onChange: (value: string) => void
   onBlur?: () => void
   onFocus?: () => void
+  onKeyPress?: (e: React.KeyboardEvent) => void
   className?: string
   maxLength?: number
   required?: boolean
@@ -25,6 +26,7 @@ const SecureInput: React.FC<SecureInputProps> = ({
   onChange,
   onBlur,
   onFocus,
+  onKeyPress,
   className = '',
   maxLength = 1000,
   required = false,
@@ -121,6 +123,7 @@ const SecureInput: React.FC<SecureInputProps> = ({
             onChange={handleChange}
             onFocus={handleFocus}
             onBlur={handleBlur}
+            onKeyPress={onKeyPress}
             placeholder={placeholder}
             disabled={disabled}
             required={required}
@@ -136,6 +139,7 @@ const SecureInput: React.FC<SecureInputProps> = ({
             onChange={handleChange}
             onFocus={handleFocus}
             onBlur={handleBlur}
+            onKeyPress={onKeyPress}
             placeholder={placeholder}
             disabled={disabled}
             required={required}

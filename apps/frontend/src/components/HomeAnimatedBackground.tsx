@@ -166,21 +166,21 @@ const HomeAnimatedBackground: React.FC = () => {
       case 'letter':
         return {
           ...baseStyle,
-          color: 'rgba(91, 33, 182, 0.08)',
+          color: 'rgba(91, 33, 182, 0.03)',
           fontWeight: 'bold',
           fontFamily: 'serif',
         }
       case 'book':
         return {
           ...baseStyle,
-          color: 'rgba(139, 69, 19, 0.06)',
+          color: 'rgba(139, 69, 19, 0.02)',
           fontWeight: 'bold',
           fontFamily: 'serif',
         }
       case 'quote':
         return {
           ...baseStyle,
-          color: 'rgba(75, 85, 99, 0.05)',
+          color: 'rgba(75, 85, 99, 0.02)',
           fontStyle: 'italic',
           fontFamily: 'serif',
           maxWidth: '180px',
@@ -189,22 +189,22 @@ const HomeAnimatedBackground: React.FC = () => {
       case 'star':
         return {
           ...baseStyle,
-          color: 'rgba(251, 191, 36, 0.12)',
+          color: 'rgba(251, 191, 36, 0.04)',
         }
       case 'heart':
         return {
           ...baseStyle,
-          color: 'rgba(239, 68, 68, 0.10)',
+          color: 'rgba(239, 68, 68, 0.03)',
         }
       case 'sparkle':
         return {
           ...baseStyle,
-          color: 'rgba(59, 130, 246, 0.12)',
+          color: 'rgba(59, 130, 246, 0.04)',
         }
       case 'library':
         return {
           ...baseStyle,
-          color: 'rgba(34, 197, 94, 0.08)',
+          color: 'rgba(34, 197, 94, 0.03)',
         }
       default:
         return baseStyle
@@ -259,9 +259,9 @@ const HomeAnimatedBackground: React.FC = () => {
         </motion.div>
       ))}
 
-      {/* Decorative elements */}
+      {/* Decorative elements - much more subtle */}
       <motion.div
-        className="absolute top-1/4 left-1/4 text-5xl text-primary-200/8"
+        className="absolute top-1/4 left-1/4 text-5xl text-primary-200/2"
         animate={{
           rotate: [0, 360],
           scale: [1, 1.1, 1],
@@ -276,7 +276,7 @@ const HomeAnimatedBackground: React.FC = () => {
       </motion.div>
 
       <motion.div
-        className="absolute top-3/4 right-1/4 text-4xl text-primary-300/8"
+        className="absolute top-3/4 right-1/4 text-4xl text-primary-300/2"
         animate={{
           rotate: [360, 0],
           scale: [1, 0.9, 1],
@@ -291,7 +291,7 @@ const HomeAnimatedBackground: React.FC = () => {
       </motion.div>
 
       <motion.div
-        className="absolute top-1/2 right-1/3 text-6xl text-primary-400/8"
+        className="absolute top-1/2 right-1/3 text-6xl text-primary-400/2"
         animate={{
           rotate: [0, -360],
           scale: [1, 1.2, 1],
@@ -306,7 +306,7 @@ const HomeAnimatedBackground: React.FC = () => {
       </motion.div>
 
       <motion.div
-        className="absolute top-1/3 right-1/2 text-4xl text-primary-500/6"
+        className="absolute top-1/3 right-1/2 text-4xl text-primary-500/1"
         animate={{
           rotate: [0, 180, 360],
           scale: [1, 1.1, 1],

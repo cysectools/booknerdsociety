@@ -71,26 +71,49 @@ const SecureMessaging: React.FC<SecureMessagingProps> = ({
   const sendMessage = async () => {
     if (!newMessage.trim()) return
 
+    const messageContent = newMessage.trim()
+    setNewMessage('') // Clear input immediately for better UX
+
     try {
       setConnectionStatus('encrypting')
       
+      // Simulate a small delay for encryption
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       const result = secureMessagingService.sendMessage(
-        newMessage,
+        messageContent,
         recipientId || roomId || '',
         currentUserId,
         roomId
       )
 
       if (result.success) {
-        setNewMessage('')
+        // Reload messages to show the new one
         await loadMessages()
         setConnectionStatus('connected')
+        
+        // Scroll to bottom after new message
+        setTimeout(() => {
+          scrollToBottom()
+        }, 200)
       } else {
         setConnectionStatus('disconnected')
+        // Restore message if sending failed
+        setNewMessage(messageContent)
       }
     } catch (error) {
       console.error('Error sending message:', error)
       setConnectionStatus('disconnected')
+      // Restore message if sending failed
+      setNewMessage(messageContent)
+    }
+  }
+
+  // Handle Enter key to send message
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
     }
   }
 
@@ -233,6 +256,7 @@ const SecureMessaging: React.FC<SecureMessagingProps> = ({
               type="textarea"
               value={newMessage}
               onChange={setNewMessage}
+              onKeyPress={handleKeyPress}
               placeholder="Type your secure message..."
               maxLength={1000}
               showSecurityIndicator={false}

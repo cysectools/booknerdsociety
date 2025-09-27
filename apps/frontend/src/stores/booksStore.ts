@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { Book } from '../types'
+import { databaseService } from '../services/databaseService'
+import { useUserStore } from './userStore'
 
 interface UserBook extends Book {
   progress: number
@@ -39,7 +41,7 @@ export const useBooksStore = create<BooksState>((set, get) => ({
   read: [],
   wishlist: [],
 
-  addToWishlist: (book: Book) => {
+  addToWishlist: async (book: Book) => {
     const userBook: UserBook = {
       ...book,
       progress: 0,
@@ -52,9 +54,19 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     set((state) => ({
       wishlist: [...state.wishlist, userBook]
     }))
+
+    // Save to database
+    try {
+      await databaseService.addBookToCollection('1', book.id, 'wishlist')
+      // Sync user stats
+      const { syncUserData } = useUserStore.getState()
+      await syncUserData()
+    } catch (error) {
+      console.error('Error saving to wishlist:', error)
+    }
   },
 
-  addToReadingList: (book: Book) => {
+  addToReadingList: async (book: Book) => {
     const userBook: UserBook = {
       ...book,
       progress: 0,
@@ -68,19 +80,41 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     set((state) => ({
       reading: [...state.reading, userBook]
     }))
+
+    // Save to database
+    try {
+      await databaseService.addBookToCollection('1', book.id, 'reading')
+      // Sync user stats
+      const { syncUserData } = useUserStore.getState()
+      await syncUserData()
+    } catch (error) {
+      console.error('Error saving to reading list:', error)
+    }
   },
 
-  updateProgress: (bookId: string, progress: number) => {
+  updateProgress: async (bookId: string, progress: number) => {
+    const newProgress = Math.min(100, Math.max(0, progress))
+    
     set((state) => ({
       reading: state.reading.map(book => 
         book.id === bookId 
-          ? { ...book, progress: Math.min(100, Math.max(0, progress)) }
+          ? { ...book, progress: newProgress }
           : book
       )
     }))
+
+    // Save to database
+    try {
+      await databaseService.updateBookProgress('1', bookId, newProgress)
+      // Sync user stats
+      const { syncUserData } = useUserStore.getState()
+      await syncUserData()
+    } catch (error) {
+      console.error('Error updating progress:', error)
+    }
   },
 
-  markAsRead: (bookId: string, rating?: number) => {
+  markAsRead: async (bookId: string, rating?: number) => {
     const { reading } = get()
     const book = reading.find(b => b.id === bookId)
     
@@ -96,6 +130,25 @@ export const useBooksStore = create<BooksState>((set, get) => ({
         reading: state.reading.filter(b => b.id !== bookId),
         read: [...state.read, readBook]
       }))
+
+      // Save to database
+      try {
+        await databaseService.updateBookProgress('1', bookId, 100)
+        if (rating) {
+          await databaseService.saveRating({
+            id: `${bookId}-${Date.now()}`,
+            userId: '1',
+            bookId,
+            rating,
+            createdAt: new Date()
+          })
+        }
+        // Sync user stats
+        const { syncUserData } = useUserStore.getState()
+        await syncUserData()
+      } catch (error) {
+        console.error('Error marking as read:', error)
+      }
     }
   },
 
@@ -151,7 +204,7 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     }
   },
 
-  rateBook: (bookId: string, rating: number, review?: string) => {
+  rateBook: async (bookId: string, rating: number, review?: string) => {
     const newRatingEntry = {
       rating,
       date: new Date(),
@@ -187,5 +240,22 @@ export const useBooksStore = create<BooksState>((set, get) => ({
           : book
       )
     }))
+
+    // Save to database
+    try {
+      await databaseService.saveRating({
+        id: `${bookId}-${Date.now()}`,
+        userId: '1',
+        bookId,
+        rating,
+        review,
+        createdAt: new Date()
+      })
+      // Sync user stats
+      const { syncUserData } = useUserStore.getState()
+      await syncUserData()
+    } catch (error) {
+      console.error('Error saving rating:', error)
+    }
   }
 }))

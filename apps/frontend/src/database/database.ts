@@ -86,6 +86,15 @@ interface ReadingProgressData {
   lastUpdated: Date
 }
 
+interface ClubMembershipData {
+  id: string
+  userId: string
+  clubId: string
+  joinedAt: Date
+  role: 'member' | 'moderator' | 'admin'
+  isActive: boolean
+}
+
 class SecureDatabase {
   private dbName = 'BookNerdSocietyDB'
   private version = 1
@@ -142,6 +151,13 @@ class SecureDatabase {
           progressStore.createIndex('userId', 'userId')
           progressStore.createIndex('bookId', 'bookId')
           progressStore.createIndex('status', 'status')
+        }
+
+        if (!db.objectStoreNames.contains('clubMemberships')) {
+          const membershipStore = db.createObjectStore('clubMemberships', { keyPath: 'id' })
+          membershipStore.createIndex('userId', 'userId')
+          membershipStore.createIndex('clubId', 'clubId')
+          membershipStore.createIndex('isActive', 'isActive')
         }
       }
     })
@@ -324,11 +340,129 @@ class SecureDatabase {
     return updatedUser
   }
 
+  // Club Operations
+  async saveClub(clubData: ClubData): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized')
+    
+    await new Promise<void>((resolve, reject) => {
+      const transaction = this.db!.transaction(['clubs'], 'readwrite')
+      const store = transaction.objectStore('clubs')
+      const request = store.put(clubData)
+
+      request.onsuccess = () => resolve()
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  async getClub(clubId: string): Promise<ClubData | null> {
+    if (!this.db) throw new Error('Database not initialized')
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['clubs'], 'readonly')
+      const store = transaction.objectStore('clubs')
+      const request = store.get(clubId)
+
+      request.onsuccess = () => resolve(request.result || null)
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  async getAllClubs(): Promise<ClubData[]> {
+    if (!this.db) throw new Error('Database not initialized')
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['clubs'], 'readonly')
+      const store = transaction.objectStore('clubs')
+      const request = store.getAll()
+
+      request.onsuccess = () => resolve(request.result || [])
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  async saveClubMembership(membershipData: ClubMembershipData): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized')
+    
+    await new Promise<void>((resolve, reject) => {
+      const transaction = this.db!.transaction(['clubMemberships'], 'readwrite')
+      const store = transaction.objectStore('clubMemberships')
+      const request = store.put(membershipData)
+
+      request.onsuccess = () => resolve()
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  async getUserClubMemberships(userId: string): Promise<ClubMembershipData[]> {
+    if (!this.db) throw new Error('Database not initialized')
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['clubMemberships'], 'readonly')
+      const store = transaction.objectStore('clubMemberships')
+      const index = store.index('userId')
+      const request = index.getAll(userId)
+
+      request.onsuccess = () => resolve(request.result || [])
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  async removeClubMembership(userId: string, clubId: string): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized')
+    
+    await new Promise<void>((resolve, reject) => {
+      const transaction = this.db!.transaction(['clubMemberships'], 'readwrite')
+      const store = transaction.objectStore('clubMemberships')
+      const request = store.delete(`${userId}-${clubId}`)
+
+      request.onsuccess = () => resolve()
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  async getBookRatings(bookId: string): Promise<any[]> {
+    if (!this.db) throw new Error('Database not initialized')
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['ratings', 'users'], 'readonly')
+      const ratingStore = transaction.objectStore('ratings')
+      const userStore = transaction.objectStore('users')
+      const index = ratingStore.index('bookId')
+      const request = index.getAll(bookId)
+
+      request.onsuccess = async () => {
+        const ratings = request.result || []
+        const ratingsWithUsers = await Promise.all(
+          ratings.map(async (rating) => {
+            try {
+              const user = await new Promise<UserData | null>((resolve, reject) => {
+                const userRequest = userStore.get(rating.userId)
+                userRequest.onsuccess = () => resolve(userRequest.result || null)
+                userRequest.onerror = () => reject(userRequest.error)
+              })
+              return {
+                ...rating,
+                username: user?.username || 'Anonymous'
+              }
+            } catch (error) {
+              return {
+                ...rating,
+                username: 'Anonymous'
+              }
+            }
+          })
+        )
+        resolve(ratingsWithUsers)
+      }
+      request.onerror = () => reject(request.error)
+    })
+  }
+
   // Clear all data (for testing or account deletion)
   async clearAllData(): Promise<void> {
     if (!this.db) throw new Error('Database not initialized')
     
-    const stores = ['users', 'books', 'clubs', 'friends', 'ratings', 'readingProgress']
+    const stores = ['users', 'books', 'clubs', 'friends', 'ratings', 'readingProgress', 'clubMemberships']
     
     for (const storeName of stores) {
       await new Promise<void>((resolve, reject) => {
@@ -345,4 +479,4 @@ class SecureDatabase {
 
 // Export singleton instance
 export const database = new SecureDatabase()
-export type { UserData, BookData, ClubData, FriendData, RatingData, ReadingProgressData }
+export type { UserData, BookData, ClubData, FriendData, RatingData, ReadingProgressData, ClubMembershipData }

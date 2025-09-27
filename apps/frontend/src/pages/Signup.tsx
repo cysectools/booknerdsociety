@@ -33,6 +33,8 @@ export default function Signup() {
     try {
       await register(formData)
       localStorage.setItem('token', 'mock-token')
+      // Mark user as having visited
+      localStorage.setItem('hasVisited', 'true')
       navigate('/')
     } catch (error) {
       setError('Registration failed. Please try again.')

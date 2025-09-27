@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { databaseService } from '../services/databaseService'
+import { clubService } from '../services/clubService'
 
 interface UserProfile {
   id: string
@@ -68,6 +69,21 @@ export const useUserStore = create<UserState>((set, get) => ({
         set({ 
           profile: userData,
           isTutorialCompleted: userData.isTutorialCompleted || false
+        })
+      } else {
+        // New user - create default profile and add to BookNerdSociety club
+        const newUser = {
+          ...defaultProfile,
+          id: userId
+        }
+        
+        await databaseService.saveUser(newUser)
+        await clubService.createDefaultClub()
+        await clubService.addUserToDefaultClub(userId)
+        
+        set({ 
+          profile: newUser,
+          isTutorialCompleted: false
         })
       }
     } catch (error) {

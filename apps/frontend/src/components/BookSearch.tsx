@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Search, X, BookOpen, Star, Calendar, User, Globe } from 'lucide-react'
-import { booksService } from '../services/booksService'
+import { enhancedBooksService } from '../services/enhancedBooksService'
 import { Book } from '../types'
 import { useBooksStore } from '../stores/booksStore'
 
@@ -12,6 +12,8 @@ export default function BookSearch() {
   const [showResults, setShowResults] = useState(false)
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [addedToWishlist, setAddedToWishlist] = useState<Set<string>>(new Set())
+  const [addedToReadingList, setAddedToReadingList] = useState<Set<string>>(new Set())
   
   const { addToWishlist, addToReadingList } = useBooksStore()
 
@@ -22,7 +24,7 @@ export default function BookSearch() {
     setShowResults(true)
     
     try {
-      const books = await booksService.searchBooks(searchQuery, 10)
+      const books = await enhancedBooksService.searchBooks(searchQuery, 10)
       setSearchResults(books)
     } catch (error) {
       console.error('Search error:', error)
@@ -48,16 +50,42 @@ export default function BookSearch() {
     setSelectedBook(null)
   }
 
-  const handleAddToWishlist = (book: Book) => {
-    addToWishlist(book)
-    console.log('Added to wishlist:', book.title)
-    // TODO: Add toast notification here
+  const handleAddToWishlist = async (book: Book) => {
+    try {
+      await addToWishlist(book)
+      setAddedToWishlist(prev => new Set([...prev, book.id]))
+      console.log('Added to wishlist:', book.title)
+      
+      // Reset animation after 2 seconds
+      setTimeout(() => {
+        setAddedToWishlist(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(book.id)
+          return newSet
+        })
+      }, 2000)
+    } catch (error) {
+      console.error('Error adding to wishlist:', error)
+    }
   }
 
-  const handleAddToReadingList = (book: Book) => {
-    addToReadingList(book)
-    console.log('Added to reading list:', book.title)
-    // TODO: Add toast notification here
+  const handleAddToReadingList = async (book: Book) => {
+    try {
+      await addToReadingList(book)
+      setAddedToReadingList(prev => new Set([...prev, book.id]))
+      console.log('Added to reading list:', book.title)
+      
+      // Reset animation after 2 seconds
+      setTimeout(() => {
+        setAddedToReadingList(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(book.id)
+          return newSet
+        })
+      }, 2000)
+    } catch (error) {
+      console.error('Error adding to reading list:', error)
+    }
   }
 
   return (
@@ -248,19 +276,53 @@ export default function BookSearch() {
                     onClick={() => handleAddToWishlist(selectedBook)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="btn-primary flex-1 flex items-center justify-center gap-2"
+                    className={`flex-1 flex items-center justify-center gap-2 transition-all duration-300 ${
+                      addedToWishlist.has(selectedBook.id)
+                        ? 'bg-green-500 hover:bg-green-600 text-white'
+                        : 'btn-primary'
+                    }`}
+                    animate={addedToWishlist.has(selectedBook.id) ? {
+                      scale: [1, 1.05, 1],
+                      backgroundColor: ['#3b82f6', '#10b981', '#3b82f6']
+                    } : {}}
+                    transition={{ duration: 0.6 }}
                   >
-                    <Star className="h-4 w-4" />
-                    Add to Wishlist
+                    <motion.div
+                      animate={addedToWishlist.has(selectedBook.id) ? {
+                        rotate: [0, 360],
+                        scale: [1, 1.2, 1]
+                      } : {}}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <Star className="h-4 w-4" />
+                    </motion.div>
+                    {addedToWishlist.has(selectedBook.id) ? 'Added to Wishlist!' : 'Add to Wishlist'}
                   </motion.button>
                   <motion.button 
                     onClick={() => handleAddToReadingList(selectedBook)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="btn-secondary flex-1 flex items-center justify-center gap-2"
+                    className={`flex-1 flex items-center justify-center gap-2 transition-all duration-300 ${
+                      addedToReadingList.has(selectedBook.id)
+                        ? 'bg-green-500 hover:bg-green-600 text-white'
+                        : 'btn-secondary'
+                    }`}
+                    animate={addedToReadingList.has(selectedBook.id) ? {
+                      scale: [1, 1.05, 1],
+                      backgroundColor: ['#6b7280', '#10b981', '#6b7280']
+                    } : {}}
+                    transition={{ duration: 0.6 }}
                   >
-                    <BookOpen className="h-4 w-4" />
-                    Add to Reading List
+                    <motion.div
+                      animate={addedToReadingList.has(selectedBook.id) ? {
+                        rotate: [0, 360],
+                        scale: [1, 1.2, 1]
+                      } : {}}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <BookOpen className="h-4 w-4" />
+                    </motion.div>
+                    {addedToReadingList.has(selectedBook.id) ? 'Added to Reading List!' : 'Add to Reading List'}
                   </motion.button>
                 </div>
               </div>

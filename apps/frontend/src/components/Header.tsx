@@ -37,6 +37,9 @@ export default function Header() {
             <Link to="/friends" className="text-gray-700 hover:text-primary-600 transition-colors">
               Friends
             </Link>
+            <Link to="/ratings" className="text-gray-700 hover:text-primary-600 transition-colors">
+              Ratings
+            </Link>
             
             {isAuthenticated ? (
               <>
@@ -106,6 +109,13 @@ export default function Header() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Friends
+              </Link>
+              <Link
+                to="/ratings"
+                className="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Ratings
               </Link>
               
               {isAuthenticated ? (

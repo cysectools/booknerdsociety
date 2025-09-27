@@ -1,30 +1,35 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Search, BookOpen, Star, Filter, X, Calendar, User, Globe } from 'lucide-react'
-import { booksService } from '../services/booksService'
+import { Search, BookOpen, Star, Filter, X, Calendar, User, Globe, RefreshCw } from 'lucide-react'
+import { enhancedBooksService } from '../services/enhancedBooksService'
 import { Book } from '../types'
 import { useBooksStore } from '../stores/booksStore'
 
 export default function Books() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [books, setBooks] = useState<Book[]>([])
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [activeFilter, setActiveFilter] = useState<'all' | 'top-rated' | 'new-releases'>('all')
+  const [hasMore, setHasMore] = useState(true)
+  const [isSearching, setIsSearching] = useState(false)
+  const [addedToWishlist, setAddedToWishlist] = useState<Set<string>>(new Set())
+  const [addedToReadingList, setAddedToReadingList] = useState<Set<string>>(new Set())
   
   const { addToWishlist, addToReadingList } = useBooksStore()
+  const observerRef = useRef<IntersectionObserver | null>(null)
 
   const loadInitialBooks = async () => {
     setLoading(true)
+    setHasMore(true)
     try {
-      const initialBooks = await booksService.getRecommendedBooks(20)
-      setBooks(initialBooks)
+      enhancedBooksService.reset() // Reset for fresh start
+      const initialBooks = await enhancedBooksService.getRecommendedBooks(20)
       setFilteredBooks(initialBooks)
     } catch (error) {
       console.error('Error loading initial books:', error)
-      setBooks([])
       setFilteredBooks([])
     } finally {
       setLoading(false)
@@ -35,42 +40,49 @@ export default function Books() {
     if (!searchQuery.trim()) return
     
     setLoading(true)
+    setIsSearching(true)
+    setHasMore(false) // Disable infinite scroll for search
     try {
-      const searchResults = await booksService.searchBooks(searchQuery, 20)
-      setBooks(searchResults)
+      const searchResults = await enhancedBooksService.searchBooks(searchQuery, 20)
       setFilteredBooks(searchResults)
     } catch (error) {
       console.error('Search error:', error)
-      setBooks([])
       setFilteredBooks([])
     } finally {
       setLoading(false)
     }
   }
 
-  const applyFilter = (filter: 'all' | 'top-rated' | 'new-releases') => {
+  const applyFilter = async (filter: 'all' | 'top-rated' | 'new-releases') => {
     setActiveFilter(filter)
+    setLoading(true)
+    setIsSearching(false)
+    setHasMore(true)
     
-    let filtered = [...books]
-    
-    switch (filter) {
-      case 'top-rated':
-        filtered = books.filter(book => (book.rating || 0) >= 4.5)
-        break
-      case 'new-releases':
-        const currentYear = new Date().getFullYear()
-        filtered = books.filter(book => {
-          const bookYear = parseInt(book.year || '0')
-          return bookYear >= currentYear - 2
-        })
-        break
-      case 'all':
-      default:
-        filtered = books
-        break
+    try {
+      let newBooks: Book[] = []
+      
+      switch (filter) {
+        case 'top-rated':
+          newBooks = await enhancedBooksService.getTopRatedBooks(20)
+          break
+        case 'new-releases':
+          newBooks = await enhancedBooksService.getNewReleases(20)
+          break
+        case 'all':
+        default:
+          enhancedBooksService.reset()
+          newBooks = await enhancedBooksService.getRecommendedBooks(20)
+          break
+      }
+      
+      setFilteredBooks(newBooks)
+    } catch (error) {
+      console.error('Filter error:', error)
+      setFilteredBooks([])
+    } finally {
+      setLoading(false)
     }
-    
-    setFilteredBooks(filtered)
   }
 
   const handleBookClick = (book: Book) => {
@@ -83,17 +95,97 @@ export default function Books() {
     setSelectedBook(null)
   }
 
-  const handleAddToWishlist = (book: Book) => {
-    addToWishlist(book)
-    console.log('Added to wishlist:', book.title)
-    // TODO: Add toast notification here
+  const handleAddToWishlist = async (book: Book) => {
+    try {
+      await addToWishlist(book)
+      setAddedToWishlist(prev => new Set([...prev, book.id]))
+      console.log('Added to wishlist:', book.title)
+      
+      // Reset animation after 2 seconds
+      setTimeout(() => {
+        setAddedToWishlist(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(book.id)
+          return newSet
+        })
+      }, 2000)
+    } catch (error) {
+      console.error('Error adding to wishlist:', error)
+    }
   }
 
-  const handleAddToReadingList = (book: Book) => {
-    addToReadingList(book)
-    console.log('Added to reading list:', book.title)
-    // TODO: Add toast notification here
+  const handleAddToReadingList = async (book: Book) => {
+    try {
+      await addToReadingList(book)
+      setAddedToReadingList(prev => new Set([...prev, book.id]))
+      console.log('Added to reading list:', book.title)
+      
+      // Reset animation after 2 seconds
+      setTimeout(() => {
+        setAddedToReadingList(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(book.id)
+          return newSet
+        })
+      }, 2000)
+    } catch (error) {
+      console.error('Error adding to reading list:', error)
+    }
   }
+
+  const loadMoreBooks = async () => {
+    if (loadingMore || !hasMore || isSearching) return
+    
+    setLoadingMore(true)
+    try {
+      let newBooks: Book[] = []
+      
+      switch (activeFilter) {
+        case 'top-rated':
+          newBooks = await enhancedBooksService.loadMoreTopRated(20)
+          break
+        case 'new-releases':
+          newBooks = await enhancedBooksService.loadMoreNewReleases(20)
+          break
+        case 'all':
+        default:
+          newBooks = await enhancedBooksService.loadMoreBooks(20)
+          break
+      }
+      
+      if (newBooks.length === 0) {
+        setHasMore(false)
+      } else {
+        setFilteredBooks(prev => [...prev, ...newBooks])
+      }
+    } catch (error) {
+      console.error('Error loading more books:', error)
+      setHasMore(false)
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
+  const handleRefresh = async () => {
+    setSearchQuery('')
+    setIsSearching(false)
+    setHasMore(true)
+    await loadInitialBooks()
+  }
+
+  // Infinite scroll observer
+  const lastBookElementRef = useCallback((node: HTMLDivElement) => {
+    if (loadingMore) return
+    if (observerRef.current) observerRef.current.disconnect()
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && !isSearching) {
+        loadMoreBooks()
+      }
+    })
+    
+    if (node) observerRef.current.observe(node)
+  }, [loadingMore, hasMore, isSearching])
 
   useEffect(() => {
     loadInitialBooks()
@@ -137,18 +229,30 @@ export default function Books() {
                   className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-              <button
-                onClick={handleSearch}
-                disabled={loading}
-                className="btn-primary flex items-center gap-2"
-              >
-                {loading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                ) : (
-                  <Search className="h-5 w-5" />
-                )}
-                Search
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSearch}
+                  disabled={loading}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    <Search className="h-5 w-5" />
+                  )}
+                  Search
+                </button>
+                <motion.button
+                  onClick={handleRefresh}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="btn-secondary flex items-center gap-2"
+                  title="Refresh books"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  <span className="hidden sm:inline">Refresh</span>
+                </motion.button>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -222,15 +326,18 @@ export default function Books() {
               </p>
             </div>
           ) : (
-            filteredBooks.map((book: any, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="book-card cursor-pointer"
-                onClick={() => handleBookClick(book)}
-              >
+            filteredBooks.map((book: any, index) => {
+              const isLastBook = index === filteredBooks.length - 1
+              return (
+                <motion.div
+                  key={book.id || index}
+                  ref={isLastBook ? lastBookElementRef : null}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className="book-card cursor-pointer"
+                  onClick={() => handleBookClick(book)}
+                >
                 <div className="aspect-[2/3] bg-gray-200 rounded-lg mb-4 overflow-hidden">
                   <img
                     src={book.cover || '/placeholder-book.jpg'}
@@ -244,10 +351,37 @@ export default function Books() {
                   <Star className="h-4 w-4 text-yellow-400 fill-current" />
                   <span className="text-sm text-gray-600">{book.rating || '4.5'}</span>
                 </div>
-              </motion.div>
-            ))
+                </motion.div>
+              )
+            })
           )}
         </motion.div>
+
+        {/* Loading More Indicator */}
+        {loadingMore && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center py-8"
+          >
+            <div className="flex items-center gap-3 text-gray-600">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+              <span>Loading more books...</span>
+            </div>
+          </motion.div>
+        )}
+
+        {/* End of Results */}
+        {!hasMore && filteredBooks.length > 0 && !isSearching && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-8 text-gray-500"
+          >
+            <BookOpen className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+            <p>You've reached the end! No more books to load.</p>
+          </motion.div>
+        )}
       </div>
 
       {/* Book Details Modal */}
@@ -343,19 +477,53 @@ export default function Books() {
                     onClick={() => handleAddToWishlist(selectedBook)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="btn-primary flex-1 flex items-center justify-center gap-2"
+                    className={`flex-1 flex items-center justify-center gap-2 transition-all duration-300 ${
+                      addedToWishlist.has(selectedBook.id)
+                        ? 'bg-green-500 hover:bg-green-600 text-white'
+                        : 'btn-primary'
+                    }`}
+                    animate={addedToWishlist.has(selectedBook.id) ? {
+                      scale: [1, 1.05, 1],
+                      backgroundColor: ['#3b82f6', '#10b981', '#3b82f6']
+                    } : {}}
+                    transition={{ duration: 0.6 }}
                   >
-                    <Star className="h-4 w-4" />
-                    Add to Wishlist
+                    <motion.div
+                      animate={addedToWishlist.has(selectedBook.id) ? {
+                        rotate: [0, 360],
+                        scale: [1, 1.2, 1]
+                      } : {}}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <Star className="h-4 w-4" />
+                    </motion.div>
+                    {addedToWishlist.has(selectedBook.id) ? 'Added to Wishlist!' : 'Add to Wishlist'}
                   </motion.button>
                   <motion.button 
                     onClick={() => handleAddToReadingList(selectedBook)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="btn-secondary flex-1 flex items-center justify-center gap-2"
+                    className={`flex-1 flex items-center justify-center gap-2 transition-all duration-300 ${
+                      addedToReadingList.has(selectedBook.id)
+                        ? 'bg-green-500 hover:bg-green-600 text-white'
+                        : 'btn-secondary'
+                    }`}
+                    animate={addedToReadingList.has(selectedBook.id) ? {
+                      scale: [1, 1.05, 1],
+                      backgroundColor: ['#6b7280', '#10b981', '#6b7280']
+                    } : {}}
+                    transition={{ duration: 0.6 }}
                   >
-                    <BookOpen className="h-4 w-4" />
-                    Add to Reading List
+                    <motion.div
+                      animate={addedToReadingList.has(selectedBook.id) ? {
+                        rotate: [0, 360],
+                        scale: [1, 1.2, 1]
+                      } : {}}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <BookOpen className="h-4 w-4" />
+                    </motion.div>
+                    {addedToReadingList.has(selectedBook.id) ? 'Added to Reading List!' : 'Add to Reading List'}
                   </motion.button>
                 </div>
               </div>

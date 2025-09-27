@@ -1,4 +1,4 @@
-import { database, UserData, BookData, ReadingProgressData, RatingData } from '../database/database'
+import { database, UserData, BookData, ReadingProgressData, RatingData, ClubData, ClubMembershipData } from '../database/database'
 
 class DatabaseService {
   private isInitialized = false
@@ -179,6 +179,43 @@ class DatabaseService {
     // In a real app, you'd delete specific user data
     // For now, we'll clear all data
     await database.clearAllData()
+  }
+
+  // Club Operations
+  async saveClub(clubData: ClubData): Promise<void> {
+    await this.init()
+    await database.saveClub(clubData)
+  }
+
+  async getClub(clubId: string): Promise<ClubData | null> {
+    await this.init()
+    return await database.getClub(clubId)
+  }
+
+  async getAllClubs(): Promise<ClubData[]> {
+    await this.init()
+    return await database.getAllClubs()
+  }
+
+  async saveClubMembership(membershipData: ClubMembershipData): Promise<void> {
+    await this.init()
+    await database.saveClubMembership(membershipData)
+  }
+
+  async getUserClubMemberships(userId: string): Promise<ClubMembershipData[]> {
+    await this.init()
+    return await database.getUserClubMemberships(userId)
+  }
+
+  async removeClubMembership(userId: string, clubId: string): Promise<void> {
+    await this.init()
+    await database.removeClubMembership(userId, clubId)
+  }
+
+  // Rating Operations
+  async getBookRatings(bookId: string): Promise<any[]> {
+    await this.init()
+    return await database.getBookRatings(bookId)
   }
 }
 

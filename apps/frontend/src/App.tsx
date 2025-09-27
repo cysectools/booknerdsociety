@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
 import { useEffect, useState } from 'react'
 import Layout from './components/Layout'
@@ -13,14 +13,23 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import MyBooks from './pages/MyBooks'
 import Ratings from './pages/Ratings'
-import { authService } from './services/authService'
 
 function App() {
   const { initializeAuth, isAuthenticated } = useAuthStore()
   const [showSplash, setShowSplash] = useState(true)
+  const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     initializeAuth()
+    
+    // Don't show splash screen on login/signup pages
+    const isAuthPage = location.pathname === '/login' || location.pathname === '/signup'
+    
+    if (isAuthPage) {
+      setShowSplash(false)
+      return
+    }
     
     // Show splash screen for 3.5 seconds (perfect timing for book animation)
     const timer = setTimeout(() => {
@@ -28,27 +37,37 @@ function App() {
     }, 3500)
 
     return () => clearTimeout(timer)
-  }, [initializeAuth])
+  }, [initializeAuth, location.pathname])
 
-  // Redirect new/logged out users to signup/login
+  // Redirect new/logged out users to signup/login (only on specific routes)
   useEffect(() => {
     if (!showSplash && !isAuthenticated) {
-      // Check if user has visited before
-      const hasVisited = localStorage.getItem('hasVisited')
-      if (!hasVisited) {
-        // First time visitor - redirect to signup
-        window.location.href = '/signup'
-      } else {
-        // Returning user - redirect to login
-        window.location.href = '/login'
+      // Only redirect if we're on the home page or a protected route
+      const protectedRoutes = ['/', '/profile', '/my-books', '/clubs', '/friends', '/ratings']
+      const isOnProtectedRoute = protectedRoutes.includes(location.pathname)
+      
+      if (isOnProtectedRoute) {
+        // Check if user has visited before
+        const hasVisited = localStorage.getItem('hasVisited')
+        if (!hasVisited) {
+          // First time visitor - redirect to signup
+          navigate('/signup', { replace: true })
+        } else {
+          // Returning user - redirect to login
+          navigate('/login', { replace: true })
+        }
       }
     }
-  }, [showSplash, isAuthenticated])
+  }, [showSplash, isAuthenticated, navigate, location.pathname])
+
+  // Don't show splash screen on auth pages
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup'
+  const shouldShowSplash = showSplash && !isAuthPage
 
   return (
     <>
-      <SplashScreen isVisible={showSplash} />
-      {!showSplash && (
+      <SplashScreen isVisible={shouldShowSplash} />
+      {!shouldShowSplash && (
         <Layout>
                 <Routes>
                   <Route path="/" element={<Home />} />

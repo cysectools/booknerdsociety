@@ -191,6 +191,20 @@ export default function Books() {
     loadInitialBooks()
   }, [])
 
+  // Real-time search effect
+  useEffect(() => {
+    const searchTimeout = setTimeout(() => {
+      if (searchQuery.trim()) {
+        handleSearch()
+      } else if (isSearching) {
+        // Reset to initial books when search is cleared
+        loadInitialBooks()
+      }
+    }, 300) // 300ms delay for debouncing
+
+    return () => clearTimeout(searchTimeout)
+  }, [searchQuery])
+
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -222,37 +236,22 @@ export default function Books() {
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
                   type="text"
-                  placeholder="Search for books, authors, or genres..."
+                  placeholder="Search for books, authors, or genres... (real-time)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSearch}
-                  disabled={loading}
-                  className="btn-primary flex items-center gap-2"
-                >
-                  {loading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : (
-                    <Search className="h-5 w-5" />
-                  )}
-                  Search
-                </button>
-                <motion.button
-                  onClick={handleRefresh}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="btn-secondary flex items-center gap-2"
-                  title="Refresh books"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  <span className="hidden sm:inline">Refresh</span>
-                </motion.button>
-              </div>
+              <motion.button
+                onClick={handleRefresh}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="btn-secondary flex items-center gap-2"
+                title="Refresh books"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span className="hidden sm:inline">Refresh</span>
+              </motion.button>
             </div>
           </div>
         </motion.div>

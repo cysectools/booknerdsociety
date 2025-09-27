@@ -1,10 +1,28 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { Users, Plus, Search, Filter, Star, MessageCircle } from 'lucide-react'
 
 export default function BookClubs() {
   const [searchQuery, setSearchQuery] = useState('')
+  const navigate = useNavigate()
+
+  const handleClubClick = (clubId: string) => {
+    navigate(`/clubs/${clubId}`)
+  }
   const [clubs] = useState([
+    {
+      id: 'booknerdsociety',
+      name: 'BookNerdSociety',
+      description: 'The official BookNerdSociety club for all book lovers! Join discussions, share recommendations, and discover your next favorite read.',
+      memberCount: 1,
+      maxMembers: 1000,
+      currentBook: 'The Great Gatsby',
+      icon: '📚',
+      rating: 4.9,
+      isJoined: true,
+      isOfficial: true
+    },
     {
       id: 1,
       name: 'Fantasy Readers',
@@ -116,7 +134,10 @@ export default function BookClubs() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="club-card"
+              className={`club-card cursor-pointer hover:scale-105 transition-all duration-300 ${club.isOfficial ? 'ring-2 ring-primary-500 bg-gradient-to-br from-primary-50 to-primary-100' : ''}`}
+              onClick={() => handleClubClick(String(club.id))}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="text-4xl">{club.icon}</div>
@@ -126,7 +147,14 @@ export default function BookClubs() {
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold mb-2">{club.name}</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-xl font-bold">{club.name}</h3>
+                {club.isOfficial && (
+                  <span className="px-2 py-1 bg-primary-500 text-white text-xs font-semibold rounded-full">
+                    Official
+                  </span>
+                )}
+              </div>
               <p className="text-gray-600 mb-4 line-clamp-3">{club.description}</p>
 
               <div className="space-y-3 mb-6">
@@ -140,7 +168,7 @@ export default function BookClubs() {
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
                 <button
                   className={`flex-1 py-2 px-4 rounded-xl font-semibold transition-all duration-300 ${
                     club.isJoined

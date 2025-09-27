@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Search, BookOpen, Star, Filter, X, Calendar, User, Globe, RefreshCw } from 'lucide-react'
-import { enhancedBooksService } from '../services/enhancedBooksService'
+import { realBookService } from '../services/realBookService'
 import { Book } from '../types'
 import { useBooksStore } from '../stores/booksStore'
 
@@ -25,8 +25,7 @@ export default function Books() {
     setLoading(true)
     setHasMore(true)
     try {
-      enhancedBooksService.reset() // Reset for fresh start
-      const initialBooks = await enhancedBooksService.getRecommendedBooks(20)
+      const initialBooks = await realBookService.getRecommendedBooks(20)
       setFilteredBooks(initialBooks)
     } catch (error) {
       console.error('Error loading initial books:', error)
@@ -43,7 +42,7 @@ export default function Books() {
     setIsSearching(true)
     setHasMore(false) // Disable infinite scroll for search
     try {
-      const searchResults = await enhancedBooksService.searchBooks(searchQuery, 20)
+      const searchResults = await realBookService.searchBooks(searchQuery, 20)
       setFilteredBooks(searchResults)
     } catch (error) {
       console.error('Search error:', error)
@@ -64,15 +63,14 @@ export default function Books() {
       
       switch (filter) {
         case 'top-rated':
-          newBooks = await enhancedBooksService.getTopRatedBooks(20)
+          newBooks = await realBookService.getTopRatedBooks(20)
           break
         case 'new-releases':
-          newBooks = await enhancedBooksService.getNewReleases(20)
+          newBooks = await realBookService.getNewReleases(20)
           break
         case 'all':
         default:
-          enhancedBooksService.reset()
-          newBooks = await enhancedBooksService.getRecommendedBooks(20)
+          newBooks = await realBookService.getRecommendedBooks(20)
           break
       }
       
@@ -138,26 +136,25 @@ export default function Books() {
     
     setLoadingMore(true)
     try {
+      // For real book service, we'll just reload the same books
+      // In a real implementation, you'd implement pagination
       let newBooks: Book[] = []
       
       switch (activeFilter) {
         case 'top-rated':
-          newBooks = await enhancedBooksService.loadMoreTopRated(20)
+          newBooks = await realBookService.getTopRatedBooks(20)
           break
         case 'new-releases':
-          newBooks = await enhancedBooksService.loadMoreNewReleases(20)
+          newBooks = await realBookService.getNewReleases(20)
           break
         case 'all':
         default:
-          newBooks = await enhancedBooksService.loadMoreBooks(20)
+          newBooks = await realBookService.getRecommendedBooks(20)
           break
       }
       
-      if (newBooks.length === 0) {
-        setHasMore(false)
-      } else {
-        setFilteredBooks(prev => [...prev, ...newBooks])
-      }
+      setFilteredBooks(newBooks)
+      setHasMore(false) // Disable infinite scroll for now
     } catch (error) {
       console.error('Error loading more books:', error)
       setHasMore(false)
@@ -304,13 +301,28 @@ export default function Books() {
           </motion.button>
         </motion.div>
 
+        {/* Loading Indicator */}
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center py-12"
+          >
+            <div className="flex items-center gap-3 text-gray-600">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="text-lg">Loading books...</span>
+            </div>
+          </motion.div>
+        )}
+
         {/* Books Grid */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-        >
+        {!loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          >
           {filteredBooks.length === 0 ? (
             <div className="col-span-full text-center py-12">
               <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -354,7 +366,8 @@ export default function Books() {
               )
             })
           )}
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* Loading More Indicator */}
         {loadingMore && (

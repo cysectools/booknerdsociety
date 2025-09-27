@@ -1,6 +1,6 @@
 import { Book } from '../types'
 
-const GOOGLE_BOOKS_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY || 'AIzaSyBsB8wNzX8nBj7I7C1SM9teRdhtnkQVWvc'
+const GOOGLE_BOOKS_API_KEY = (import.meta as any).env?.VITE_GOOGLE_BOOKS_API_KEY || 'AIzaSyBsB8wNzX8nBj7I7C1SM9teRdhtnkQVWvc'
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes'
 
 export interface GoogleBooksResponse {

@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Users, MessageCircle, Settings, Send, MoreVertical, Crown, Shield, Trash2, UserPlus, UserMinus, AlertTriangle } from 'lucide-react'
+import { Users, MessageCircle, Settings, MoreVertical, Crown, Shield, Trash2, UserPlus, UserMinus, AlertTriangle } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import SecureMessaging from '../components/SecureMessaging'
 
 export default function Club() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { } = useAuthStore()
   const [activeTab, setActiveTab] = useState('chat')
-  const [message, setMessage] = useState('')
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
@@ -180,42 +180,6 @@ export default function Club() {
     }
   }, [club])
 
-  const [messages, setMessages] = useState<any[]>([])
-
-  // Generate messages based on club
-  useEffect(() => {
-    if (club) {
-      const generateMessages = () => {
-        const baseMessages = [
-          { id: 1, username: club.owner, content: `Welcome to ${club.name}!`, timestamp: '2 hours ago' },
-          { id: 2, username: 'FantasyFan', content: `Excited to discuss ${club.currentBook}!`, timestamp: '1 hour ago' },
-          { id: 3, username: 'MagicReader', content: 'This book is amazing so far!', timestamp: '30 minutes ago' }
-        ]
-
-        // Add more messages based on club activity
-        const additionalMessages = []
-        for (let i = 4; i <= Math.min(club.memberCount, 8); i++) {
-          const messageTemplates = [
-            `I'm really enjoying ${club.currentBook}!`,
-            'Great discussion everyone!',
-            'Has anyone finished the book yet?',
-            'I love this author\'s writing style!',
-            'Can\'t wait for the next chapter discussion!'
-          ]
-          additionalMessages.push({
-            id: i,
-            username: `Member${i}`,
-            content: messageTemplates[Math.floor(Math.random() * messageTemplates.length)],
-            timestamp: `${Math.floor(Math.random() * 24)} hours ago`
-          })
-        }
-
-        setMessages([...baseMessages, ...additionalMessages])
-      }
-
-      generateMessages()
-    }
-  }, [club])
 
   const tabs = [
     { id: 'chat', label: 'Chat', icon: MessageCircle },
@@ -223,14 +187,6 @@ export default function Club() {
     { id: 'settings', label: 'Settings', icon: Settings }
   ]
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (message.trim()) {
-      // TODO: Implement send message
-      console.log('Sending message:', message)
-      setMessage('')
-    }
-  }
 
   const handleLeaveClub = () => {
     // TODO: Implement leave club
@@ -405,39 +361,12 @@ export default function Club() {
         >
           {/* Chat Tab */}
           {activeTab === 'chat' && (
-            <div className="h-96 flex flex-col">
-              <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-                {messages.map((msg) => (
-                  <div key={msg.id} className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      {msg.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold">{msg.username}</span>
-                        <span className="text-xs text-gray-500">{msg.timestamp}</span>
-                      </div>
-                      <p className="text-gray-700">{msg.content}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <form onSubmit={handleSendMessage} className="flex gap-3">
-                <input
-                  type="text"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-                <button
-                  type="submit"
-                  className="btn-primary flex items-center gap-2"
-                >
-                  <Send className="h-4 w-4" />
-                  Send
-                </button>
-              </form>
+            <div className="h-96">
+              <SecureMessaging
+                roomId={id}
+                currentUserId="current_user"
+                className="h-full"
+              />
             </div>
           )}
 

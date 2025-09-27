@@ -174,7 +174,7 @@ class DatabaseService {
     }
   }
 
-  async clearUserData(userId: string): Promise<void> {
+  async clearUserData(_userId: string): Promise<void> {
     await this.init()
     // In a real app, you'd delete specific user data
     // For now, we'll clear all data

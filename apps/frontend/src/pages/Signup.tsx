@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
-import { BookOpen, User, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { BookOpen, Shield } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import SecureInput from '../components/SecureInput'
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -11,8 +12,6 @@ export default function Signup() {
     password: '',
     confirmPassword: ''
   })
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
@@ -31,11 +30,14 @@ export default function Signup() {
     setError('')
     
     try {
-      await register(formData)
-      localStorage.setItem('token', 'mock-token')
-      // Mark user as having visited
-      localStorage.setItem('hasVisited', 'true')
-      navigate('/')
+      const result = await register(formData)
+      if (result.success) {
+        // Mark user as having visited
+        localStorage.setItem('hasVisited', 'true')
+        navigate('/')
+      } else {
+        setError(result.message || 'Registration failed. Please try again.')
+      }
     } catch (error) {
       setError('Registration failed. Please try again.')
       console.error('Signup error:', error)
@@ -44,12 +46,6 @@ export default function Signup() {
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -67,98 +63,71 @@ export default function Signup() {
             </div>
             <h2 className="text-3xl font-bold mb-2">Join BookNerdSociety</h2>
             <p className="text-gray-600">Create your account and start your reading journey</p>
+            
+            {/* Security Banner */}
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center justify-center gap-2 text-green-800">
+                <Shield className="h-4 w-4" />
+                <span className="text-sm font-medium">Secure Registration</span>
+              </div>
+              <p className="text-xs text-green-700 mt-1">
+                Your data is protected with enterprise-grade security
+              </p>
+            </div>
           </div>
 
           {/* Signup Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Choose a username"
-                />
-              </div>
+              <SecureInput
+                type="text"
+                label="Username"
+                value={formData.username}
+                onChange={(value) => setFormData(prev => ({ ...prev, username: value }))}
+                placeholder="Choose a username"
+                required
+                maxLength={50}
+                showSecurityIndicator={true}
+              />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Enter your email"
-                />
-              </div>
+              <SecureInput
+                type="email"
+                label="Email Address"
+                value={formData.email}
+                onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
+                placeholder="Enter your email"
+                required
+                maxLength={254}
+                showSecurityIndicator={true}
+              />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Create a password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
+              <SecureInput
+                type="password"
+                label="Password"
+                value={formData.password}
+                onChange={(value) => setFormData(prev => ({ ...prev, password: value }))}
+                placeholder="Create a password"
+                required
+                maxLength={128}
+                showSecurityIndicator={true}
+              />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  required
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Confirm your password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
+              <SecureInput
+                type="password"
+                label="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={(value) => setFormData(prev => ({ ...prev, confirmPassword: value }))}
+                placeholder="Confirm your password"
+                required
+                maxLength={128}
+                showSecurityIndicator={true}
+              />
             </div>
 
             <div className="flex items-center">

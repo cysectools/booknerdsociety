@@ -1,23 +1,5 @@
 import { databaseService } from './databaseService'
-
-export interface BookClub {
-  id: string
-  name: string
-  description: string
-  icon: string
-  memberCount: number
-  maxMembers: number
-  isPublic: boolean
-  createdAt: Date
-  createdBy: string
-  currentBook?: {
-    title: string
-    author: string
-    startDate: Date
-  }
-  rules: string[]
-  tags: string[]
-}
+import { BookClub } from '../types'
 
 export interface ClubMembership {
   id: string
@@ -36,26 +18,35 @@ class ClubService {
     icon: '📚',
     memberCount: 1,
     maxMembers: 1000,
-    isPublic: true,
+    ownerId: 'system',
+    members: [],
     createdAt: new Date(),
-    createdBy: 'system',
-    currentBook: {
-      title: 'The Great Gatsby',
-      author: 'F. Scott Fitzgerald',
-      startDate: new Date()
-    },
-    rules: [
-      'Be respectful to all members',
-      'Keep discussions book-related',
-      'No spam or self-promotion',
-      'Share your honest opinions'
-    ],
-    tags: ['general', 'classics', 'discussion']
+    updatedAt: new Date()
   }
 
   async createDefaultClub(): Promise<void> {
     try {
-      await databaseService.saveClub(this.defaultClub)
+      // Convert BookClub to ClubData format
+      const clubData = {
+        id: this.defaultClub.id,
+        name: this.defaultClub.name,
+        description: this.defaultClub.description,
+        memberCount: this.defaultClub.memberCount,
+        maxMembers: this.defaultClub.maxMembers,
+        currentBook: undefined,
+        icon: this.defaultClub.icon,
+        owner: 'system',
+        isOfficial: false,
+        rating: 4.0,
+        isJoined: false,
+        rules: [],
+        status: 'active' as const,
+        ownerId: 'system',
+        members: [],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      await databaseService.saveClub(clubData)
     } catch (error) {
       console.error('Error creating default club:', error)
     }
@@ -107,8 +98,30 @@ class ClubService {
       
       for (const membership of memberships) {
         if (membership.isActive) {
-          const club = await databaseService.getClub(membership.clubId)
-          if (club) {
+          const clubData = await databaseService.getClub(membership.clubId)
+          if (clubData) {
+            // Convert ClubData to BookClub format
+            const club: BookClub = {
+              id: clubData.id,
+              name: clubData.name,
+              description: clubData.description,
+              icon: clubData.icon,
+              memberCount: clubData.memberCount,
+              maxMembers: clubData.maxMembers || 100,
+              ownerId: clubData.ownerId,
+              members: clubData.members,
+              createdAt: clubData.createdAt,
+              updatedAt: clubData.updatedAt,
+              currentBook: undefined,
+              owner: clubData.ownerId,
+              isOfficial: false,
+              rating: 4.0,
+              isJoined: false,
+              rules: [],
+              isPublic: true,
+              createdBy: clubData.ownerId,
+              tags: ['general']
+            }
             clubs.push(club)
           }
         }
@@ -135,10 +148,10 @@ class ClubService {
       await databaseService.saveClubMembership(membership)
       
       // Update club member count
-      const club = await databaseService.getClub(clubId)
-      if (club) {
-        club.memberCount += 1
-        await databaseService.saveClub(club)
+      const clubData = await databaseService.getClub(clubId)
+      if (clubData) {
+        clubData.memberCount += 1
+        await databaseService.saveClub(clubData)
       }
     } catch (error) {
       console.error('Error joining club:', error)
@@ -151,7 +164,31 @@ class ClubService {
 
   async getClub(clubId: string): Promise<BookClub | null> {
     try {
-      return await databaseService.getClub(clubId)
+      const clubData = await databaseService.getClub(clubId)
+      if (!clubData) return null
+      
+      // Convert ClubData to BookClub format
+      return {
+        id: clubData.id,
+        name: clubData.name,
+        description: clubData.description,
+        memberCount: clubData.memberCount,
+        maxMembers: clubData.maxMembers || 100,
+        currentBook: undefined,
+        icon: clubData.icon,
+        owner: clubData.ownerId,
+        isOfficial: false,
+        rating: 4.0,
+        isJoined: false,
+        rules: [],
+        isPublic: true,
+        createdBy: clubData.ownerId,
+        tags: ['general'],
+        createdAt: clubData.createdAt,
+        ownerId: clubData.ownerId,
+        members: clubData.members,
+        updatedAt: clubData.updatedAt
+      }
     } catch (error) {
       console.error('Error getting club:', error)
       return null
@@ -160,7 +197,28 @@ class ClubService {
 
   async getAllClubs(): Promise<BookClub[]> {
     try {
-      return await databaseService.getAllClubs()
+      const clubsData = await databaseService.getAllClubs()
+      return clubsData.map(clubData => ({
+        id: clubData.id,
+        name: clubData.name,
+        description: clubData.description,
+        memberCount: clubData.memberCount,
+        maxMembers: clubData.maxMembers || 100,
+        currentBook: undefined,
+        icon: clubData.icon,
+        owner: clubData.ownerId,
+        isOfficial: false,
+        rating: 4.0,
+        isJoined: false,
+        rules: [],
+        isPublic: true,
+        createdBy: clubData.ownerId,
+        tags: ['general'],
+        createdAt: clubData.createdAt,
+        ownerId: clubData.ownerId,
+        members: clubData.members,
+        updatedAt: clubData.updatedAt
+      }))
     } catch (error) {
       console.error('Error getting all clubs:', error)
       return []

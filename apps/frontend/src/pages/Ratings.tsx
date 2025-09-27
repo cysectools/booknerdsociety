@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Star, BookOpen, User, Calendar, MessageCircle, Filter, X } from 'lucide-react'
-import { enhancedBooksService } from '../services/enhancedBooksService'
+import { Search, Star, Calendar, MessageCircle, X, Heart } from 'lucide-react'
+import { realBookService } from '../services/realBookService'
 import { Book } from '../types'
 import { databaseService } from '../services/databaseService'
+import { useBooksStore } from '../stores/booksStore'
 
 interface UserRating {
   id: string
@@ -23,13 +24,22 @@ export default function Ratings() {
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [activeFilter, setActiveFilter] = useState<'all' | 'high' | 'low'>('all')
+  const [activeTab, setActiveTab] = useState<'search' | 'rated' | 'rate'>('search')
+  const [userRatedBooks, setUserRatedBooks] = useState<Book[]>([])
+  const [popularBooks, setPopularBooks] = useState<Book[]>([])
+  const [showRatingModal, setShowRatingModal] = useState(false)
+  const [ratingBook, setRatingBook] = useState<Book | null>(null)
+  const [userRating, setUserRating] = useState(0)
+  const [userReview, setUserReview] = useState('')
+  
+  const { read } = useBooksStore()
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
     
     setLoading(true)
     try {
-      const results = await enhancedBooksService.searchBooks(searchQuery, 20)
+      const results = await realBookService.searchBooks(searchQuery, 20)
       setSearchResults(results)
     } catch (error) {
       console.error('Search error:', error)
@@ -87,6 +97,71 @@ export default function Ratings() {
     return distribution
   }
 
+  // Load user's rated books
+  const loadUserRatedBooks = async () => {
+    try {
+      // Get books from user's read list that have ratings
+      const ratedBooks = read.filter(book => (book as any).userRating && (book as any).userRating > 0)
+      setUserRatedBooks(ratedBooks)
+    } catch (error) {
+      console.error('Error loading user rated books:', error)
+    }
+  }
+
+  // Load popular books for rating
+  const loadPopularBooks = async () => {
+    try {
+      const popular = await realBookService.getTopRatedBooks(12)
+      setPopularBooks(popular)
+    } catch (error) {
+      console.error('Error loading popular books:', error)
+    }
+  }
+
+  // Handle rating a book
+  const handleRateBook = (book: Book) => {
+    setRatingBook(book)
+    setUserRating(0)
+    setUserReview('')
+    setShowRatingModal(true)
+  }
+
+  // Submit rating
+  const submitRating = async () => {
+    if (!ratingBook || userRating === 0) return
+
+    try {
+      // Save rating to database
+      await databaseService.saveRating({
+        id: `${Date.now()}`,
+        userId: 'current-user', // In real app, get from auth
+        bookId: ratingBook.id,
+        rating: userRating,
+        review: userReview,
+        createdAt: new Date()
+      })
+
+      // Update local state
+      setUserRatedBooks(prev => [...prev, { ...ratingBook, userRating }])
+      
+      // Close modal
+      setShowRatingModal(false)
+      setRatingBook(null)
+      setUserRating(0)
+      setUserReview('')
+      
+      console.log('Rating submitted successfully')
+    } catch (error) {
+      console.error('Error submitting rating:', error)
+    }
+  }
+
+  // Load data on component mount
+  useEffect(() => {
+    loadUserRatedBooks()
+    loadPopularBooks()
+  }, [])
+
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -106,13 +181,56 @@ export default function Ratings() {
           </p>
         </motion.div>
 
-        {/* Search Section */}
+        {/* Tab Navigation */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="glass-effect rounded-2xl p-6 mb-8"
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="flex flex-wrap justify-center gap-2 mb-8"
         >
+          <button
+            onClick={() => setActiveTab('search')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+              activeTab === 'search'
+                ? 'bg-primary-500 text-white shadow-lg'
+                : 'glass-effect hover:scale-105'
+            }`}
+          >
+            <Search className="h-4 w-4" />
+            Search Books
+          </button>
+          <button
+            onClick={() => setActiveTab('rated')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+              activeTab === 'rated'
+                ? 'bg-primary-500 text-white shadow-lg'
+                : 'glass-effect hover:scale-105'
+            }`}
+          >
+            <Heart className="h-4 w-4" />
+            My Rated Books
+          </button>
+          <button
+            onClick={() => setActiveTab('rate')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+              activeTab === 'rate'
+                ? 'bg-primary-500 text-white shadow-lg'
+                : 'glass-effect hover:scale-105'
+            }`}
+          >
+            <Star className="h-4 w-4" />
+            Rate Books
+          </button>
+        </motion.div>
+
+        {/* Search Section */}
+        {activeTab === 'search' && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="glass-effect rounded-2xl p-6 mb-8"
+          >
           <div className="flex gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -140,10 +258,11 @@ export default function Ratings() {
               Search
             </motion.button>
           </div>
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* Search Results */}
-        {searchResults.length > 0 && (
+        {activeTab === 'search' && searchResults.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -174,6 +293,104 @@ export default function Ratings() {
                     <Star className="h-4 w-4 text-yellow-400 fill-current" />
                     <span className="text-sm text-gray-600">{book.rating || 'N/A'}</span>
                   </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* My Rated Books Section */}
+        {activeTab === 'rated' && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mb-8"
+          >
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <Heart className="h-6 w-6 text-red-500" />
+              My Rated Books ({userRatedBooks.length})
+            </h2>
+            {userRatedBooks.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {userRatedBooks.map((book, index) => (
+                  <motion.div
+                    key={book.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    className="book-card"
+                  >
+                    <div className="aspect-[2/3] bg-gray-200 rounded-lg mb-4 overflow-hidden">
+                      <img
+                        src={book.cover || '/placeholder-book.jpg'}
+                        alt={book.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2 line-clamp-2">{book.title}</h3>
+                    <p className="text-gray-600 mb-2">{book.author}</p>
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                      <span className="text-sm text-gray-600">Your Rating: {(book as any).userRating}/5</span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">No Rated Books Yet</h3>
+                <p className="text-gray-500 mb-4">Start rating books to see them here!</p>
+                <button
+                  onClick={() => setActiveTab('rate')}
+                  className="btn-primary"
+                >
+                  Rate Books
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Rate Books Section */}
+        {activeTab === 'rate' && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mb-8"
+          >
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <Star className="h-6 w-6 text-yellow-500" />
+              Rate Popular Books
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {popularBooks.map((book, index) => (
+                <motion.div
+                  key={book.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className="book-card cursor-pointer"
+                  onClick={() => handleRateBook(book)}
+                >
+                  <div className="aspect-[2/3] bg-gray-200 rounded-lg mb-4 overflow-hidden">
+                    <img
+                      src={book.cover || '/placeholder-book.jpg'}
+                      alt={book.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2 line-clamp-2">{book.title}</h3>
+                  <p className="text-gray-600 mb-2">{book.author}</p>
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                    <span className="text-sm text-gray-600">{book.rating || 'N/A'}</span>
+                  </div>
+                  <button className="w-full mt-3 btn-primary text-sm">
+                    Rate This Book
+                  </button>
                 </motion.div>
               ))}
             </div>
@@ -349,6 +566,99 @@ export default function Ratings() {
                     </div>
                   )}
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Rating Modal */}
+        {showRatingModal && ratingBook && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            onClick={() => setShowRatingModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="glass-effect max-w-md w-full rounded-2xl p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <Star className="h-6 w-6 text-yellow-500" />
+                <h3 className="text-lg font-semibold">Rate This Book</h3>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <img
+                    src={ratingBook.cover || '/placeholder-book.jpg'}
+                    alt={ratingBook.title}
+                    className="w-16 h-20 object-cover rounded-lg"
+                  />
+                  <div>
+                    <h4 className="font-semibold">{ratingBook.title}</h4>
+                    <p className="text-gray-600">{ratingBook.author}</p>
+                  </div>
+                </div>
+
+                {/* Star Rating */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Rating
+                  </label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setUserRating(star)}
+                        className={`text-2xl transition-colors ${
+                          star <= userRating
+                            ? 'text-yellow-400'
+                            : 'text-gray-300 hover:text-yellow-300'
+                        }`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {userRating > 0 ? `${userRating} star${userRating > 1 ? 's' : ''}` : 'Select a rating'}
+                  </p>
+                </div>
+
+                {/* Review */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Review (Optional)
+                  </label>
+                  <textarea
+                    value={userReview}
+                    onChange={(e) => setUserReview(e.target.value)}
+                    placeholder="Share your thoughts about this book..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowRatingModal(false)}
+                  className="flex-1 btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitRating}
+                  disabled={userRating === 0}
+                  className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Submit Rating
+                </button>
               </div>
             </motion.div>
           </motion.div>

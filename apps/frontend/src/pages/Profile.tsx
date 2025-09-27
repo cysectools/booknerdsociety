@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { User, Edit3, BookOpen, Star, Calendar, Settings, Shield, Trash2, Eye, EyeOff, Phone, Mail, AlertTriangle } from 'lucide-react'
 import { useUserStore } from '../stores/userStore'
 import Tutorial from '../components/Tutorial'
+import SecurityDashboard from '../components/SecurityDashboard'
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false)
@@ -458,6 +459,16 @@ export default function Profile() {
             </motion.div>
           </motion.div>
         )}
+
+        {/* Security Dashboard */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="mt-8"
+        >
+          <SecurityDashboard />
+        </motion.div>
       </div>
     </div>
   )

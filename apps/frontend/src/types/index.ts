@@ -37,11 +37,20 @@ export interface BookClub {
   icon: string;
   memberCount: number;
   maxMembers?: number;
-  status: 'active' | 'inactive' | 'private';
+  status?: 'active' | 'inactive' | 'private';
   ownerId: string;
   members: string[];
   createdAt: Date;
   updatedAt: Date;
+  currentBook?: any;
+  owner?: string;
+  isOfficial?: boolean;
+  rating?: number;
+  isJoined?: boolean;
+  rules?: string[];
+  isPublic?: boolean;
+  createdBy?: string;
+  tags?: string[];
 }
 
 export interface Message {

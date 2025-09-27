@@ -80,7 +80,7 @@ const genres = [
 class EnhancedBooksService {
   private loadedBookIds = new Set<string>()
   private currentPage = 0
-  private booksPerPage = 20
+  // private _booksPerPage = 20
 
   private generateUniqueId(): string {
     return `book_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -182,8 +182,8 @@ class EnhancedBooksService {
     
     const allBooks = this.generateBooks(limit * 2)
     const topRatedBooks = allBooks
-      .filter(book => book.rating >= 4.5)
-      .sort((a, b) => b.rating - a.rating)
+      .filter(book => book.rating && book.rating >= 4.5)
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
       .slice(0, limit)
     
     return topRatedBooks
@@ -207,8 +207,8 @@ class EnhancedBooksService {
   async loadMoreTopRated(limit: number = 20): Promise<Book[]> {
     const allBooks = this.generateBooks(limit * 2)
     const topRatedBooks = allBooks
-      .filter(book => book.rating >= 4.5)
-      .sort((a, b) => b.rating - a.rating)
+      .filter(book => book.rating && book.rating >= 4.5)
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
       .slice(0, limit)
     
     return topRatedBooks

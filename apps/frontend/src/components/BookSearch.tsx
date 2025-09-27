@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Search, X, BookOpen, Star, Calendar, User, Globe } from 'lucide-react'
-import { enhancedBooksService } from '../services/enhancedBooksService'
+import { realBookService } from '../services/realBookService'
 import { Book } from '../types'
 import { useBooksStore } from '../stores/booksStore'
 
@@ -24,7 +24,7 @@ export default function BookSearch() {
     setShowResults(true)
     
     try {
-      const books = await enhancedBooksService.searchBooks(searchQuery, 10)
+      const books = await realBookService.searchBooks(searchQuery, 10)
       setSearchResults(books)
     } catch (error) {
       console.error('Search error:', error)

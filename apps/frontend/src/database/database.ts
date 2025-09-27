@@ -1,7 +1,7 @@
 // Secure Database System using IndexedDB
 // This provides client-side data persistence with encryption capabilities
 
-interface DatabaseSchema {
+export interface DatabaseSchema {
   users: UserData
   books: BookData[]
   clubs: ClubData[]

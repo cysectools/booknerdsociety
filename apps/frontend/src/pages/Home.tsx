@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import React from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Search, Star, Flame, BookOpen, Users, MessageCircle } from 'lucide-react'
 import BookSearch from '../components/BookSearch'
 import RecommendedBooks from '../components/RecommendedBooks'
 import TrendingClubs from '../components/TrendingClubs'
+import HomeAnimatedBackground from '../components/HomeAnimatedBackground'
 
 export default function Home() {
   const navigate = useNavigate()
@@ -14,9 +15,10 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      <HomeAnimatedBackground />
       {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8 z-10">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

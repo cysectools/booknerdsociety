@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, Star, Sparkles } from 'lucide-react'
+import SplashAnimatedBackground from './SplashAnimatedBackground'
 
 interface SplashScreenProps {
   isVisible: boolean
@@ -13,8 +14,9 @@ export default function SplashScreen({ isVisible }: SplashScreenProps) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-primary-100"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-primary-100 relative"
         >
+          <SplashAnimatedBackground />
           {/* Background Book Pages */}
           <div className="absolute inset-0 overflow-hidden">
             <motion.div

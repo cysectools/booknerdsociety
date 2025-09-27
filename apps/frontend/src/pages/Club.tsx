@@ -361,7 +361,7 @@ export default function Club() {
         >
           {/* Chat Tab */}
           {activeTab === 'chat' && (
-            <div className="h-96">
+            <div className="h-[500px]">
               <SecureMessaging
                 roomId={id}
                 currentUserId="current_user"

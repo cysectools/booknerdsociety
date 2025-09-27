@@ -35,10 +35,11 @@ const SecureMessaging: React.FC<SecureMessagingProps> = ({
 
   // Load messages
   useEffect(() => {
+    console.log('Loading messages for room:', roomId, 'user:', currentUserId)
     loadMessages()
     const interval = setInterval(loadMessages, 2000) // Poll for new messages
     return () => clearInterval(interval)
-  }, [roomId, recipientId])
+  }, [roomId, recipientId, currentUserId])
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -48,6 +49,33 @@ const SecureMessaging: React.FC<SecureMessagingProps> = ({
   const loadMessages = async () => {
     try {
       const loadedMessages = secureMessagingService.getMessages(currentUserId, roomId)
+      
+      // If no messages and this is a new room, add some sample messages
+      if (loadedMessages.length === 0 && roomId) {
+        const sampleMessages: Message[] = [
+          {
+            id: 'welcome-1',
+            content: 'Welcome to the club! 🎉',
+            senderId: 'system',
+            timestamp: Date.now() - 3600000, // 1 hour ago
+            encrypted: false,
+            delivered: true,
+            read: true
+          },
+          {
+            id: 'welcome-2',
+            content: 'Feel free to start a discussion about books!',
+            senderId: 'system',
+            timestamp: Date.now() - 1800000, // 30 minutes ago
+            encrypted: false,
+            delivered: true,
+            read: true
+          }
+        ]
+        setMessages(sampleMessages)
+        return
+      }
+      
       // Convert SecureMessage to Message format
       const convertedMessages: Message[] = loadedMessages.map(msg => ({
         id: msg.id,
@@ -88,8 +116,18 @@ const SecureMessaging: React.FC<SecureMessagingProps> = ({
       )
 
       if (result.success) {
-        // Reload messages to show the new one
-        await loadMessages()
+        // Add the message immediately to the UI for better UX
+        const newMsg: Message = {
+          id: result.messageId || `msg-${Date.now()}`,
+          content: messageContent,
+          senderId: currentUserId,
+          timestamp: Date.now(),
+          encrypted: true,
+          delivered: true,
+          read: false
+        }
+        
+        setMessages(prev => [...prev, newMsg])
         setConnectionStatus('connected')
         
         // Scroll to bottom after new message
@@ -253,7 +291,7 @@ const SecureMessaging: React.FC<SecureMessagingProps> = ({
         <div className="flex items-end gap-3">
           <div className="flex-1">
             <SecureInput
-              type="textarea"
+              type="text"
               value={newMessage}
               onChange={setNewMessage}
               onKeyPress={handleKeyPress}

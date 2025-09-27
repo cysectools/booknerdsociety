@@ -18,7 +18,7 @@ export default function BookClubs() {
       memberCount: 1,
       maxMembers: 1000,
       currentBook: 'The Great Gatsby',
-      icon: '📚',
+      image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&crop=center',
       rating: 4.9,
       isJoined: true,
       isOfficial: true
@@ -30,7 +30,7 @@ export default function BookClubs() {
       memberCount: 156,
       maxMembers: 200,
       currentBook: 'The Name of the Wind',
-      icon: '🧙‍♂️',
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop&crop=center',
       rating: 4.8,
       isJoined: true
     },
@@ -41,7 +41,7 @@ export default function BookClubs() {
       memberCount: 89,
       maxMembers: 150,
       currentBook: 'Dune',
-      icon: '🚀',
+      image: 'https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=400&h=300&fit=crop&crop=center',
       rating: 4.6,
       isJoined: false
     },
@@ -52,7 +52,7 @@ export default function BookClubs() {
       memberCount: 203,
       maxMembers: 250,
       currentBook: 'Gone Girl',
-      icon: '🕵️‍♀️',
+      image: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=300&fit=crop&crop=center',
       rating: 4.9,
       isJoined: true
     },
@@ -63,8 +63,19 @@ export default function BookClubs() {
       memberCount: 134,
       maxMembers: 180,
       currentBook: 'The Seven Husbands of Evelyn Hugo',
-      icon: '💕',
+      image: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&h=300&fit=crop&crop=center',
       rating: 4.7,
+      isJoined: false
+    },
+    {
+      id: 5,
+      name: 'Classic Literature',
+      description: 'Exploring timeless classics and literary masterpieces from around the world.',
+      memberCount: 98,
+      maxMembers: 120,
+      currentBook: 'Pride and Prejudice',
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop&crop=center',
+      rating: 4.8,
       isJoined: false
     }
   ])
@@ -126,7 +137,7 @@ export default function BookClubs() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
           {filteredClubs.map((club, index) => (
             <motion.div
@@ -134,53 +145,78 @@ export default function BookClubs() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              className={`club-card cursor-pointer hover:scale-105 transition-all duration-300 ${club.isOfficial ? 'ring-2 ring-primary-500 bg-gradient-to-br from-primary-50 to-primary-100' : ''}`}
-              onClick={() => handleClubClick(String(club.id))}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 ${
+                club.isOfficial ? 'ring-2 ring-primary-500' : ''
+              }`}
+              whileHover={{ y: -5 }}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="text-4xl">{club.icon}</div>
-                <div className="flex items-center gap-1">
+              {/* Club Image */}
+              <div className="relative h-48 overflow-hidden">
+                <img
+                  src={club.image}
+                  alt={club.name}
+                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                />
+                <div className="absolute top-4 right-4 flex items-center gap-1 bg-black/20 backdrop-blur-sm rounded-full px-2 py-1">
                   <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                  <span className="text-sm font-semibold">{club.rating}</span>
+                  <span className="text-white text-sm font-semibold">{club.rating}</span>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-xl font-bold">{club.name}</h3>
                 {club.isOfficial && (
-                  <span className="px-2 py-1 bg-primary-500 text-white text-xs font-semibold rounded-full">
-                    Official
-                  </span>
+                  <div className="absolute top-4 left-4">
+                    <span className="px-3 py-1 bg-primary-500 text-white text-xs font-semibold rounded-full">
+                      Official
+                    </span>
+                  </div>
                 )}
-              </div>
-              <p className="text-gray-600 mb-4 line-clamp-3">{club.description}</p>
-
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Users className="h-4 w-4" />
-                  <span>{club.memberCount}/{club.maxMembers} members</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <MessageCircle className="h-4 w-4" />
-                  <span>Currently reading: {club.currentBook}</span>
+                <div className="absolute bottom-4 left-4 right-4">
+                  <div className="bg-black/20 backdrop-blur-sm rounded-lg p-3">
+                    <div className="flex items-center gap-2 text-white text-sm">
+                      <Users className="h-4 w-4" />
+                      <span>{club.memberCount}/{club.maxMembers} members</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className={`flex-1 py-2 px-4 rounded-xl font-semibold transition-all duration-300 ${
-                    club.isJoined
-                      ? 'bg-red-500 hover:bg-red-600 text-white'
-                      : 'btn-primary'
-                  }`}
-                >
-                  {club.isJoined ? 'Leave Club' : 'Join Club'}
-                </button>
-                <button className="glass-effect p-2 rounded-xl hover:scale-105 transition-all duration-300">
+              {/* Club Content */}
+              <div className="p-6">
+                {/* Club Name */}
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{club.name}</h3>
+                
+                {/* Description */}
+                <p className="text-gray-600 mb-4 line-clamp-3 leading-relaxed">{club.description}</p>
+                
+                {/* Current Book */}
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">
                   <MessageCircle className="h-4 w-4" />
-                </button>
+                  <span>Currently reading: <strong>{club.currentBook}</strong></span>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-300 ${
+                      club.isJoined
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : 'btn-primary'
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      // Handle join/leave logic here
+                    }}
+                  >
+                    {club.isJoined ? 'Leave Club' : 'Join Club'}
+                  </button>
+                  <button 
+                    className="glass-effect p-3 rounded-xl hover:scale-105 transition-all duration-300"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleClubClick(String(club.id))
+                    }}
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))}

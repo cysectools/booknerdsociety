@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Search, X, BookOpen, Star, Calendar, User, Globe } from 'lucide-react'
 import { booksService } from '../services/booksService'
 import { Book } from '../types'
+import { useBooksStore } from '../stores/booksStore'
 
 export default function BookSearch() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -11,6 +12,8 @@ export default function BookSearch() {
   const [showResults, setShowResults] = useState(false)
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [showModal, setShowModal] = useState(false)
+  
+  const { addToWishlist, addToReadingList } = useBooksStore()
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
@@ -43,6 +46,18 @@ export default function BookSearch() {
   const closeModal = () => {
     setShowModal(false)
     setSelectedBook(null)
+  }
+
+  const handleAddToWishlist = (book: Book) => {
+    addToWishlist(book)
+    console.log('Added to wishlist:', book.title)
+    // TODO: Add toast notification here
+  }
+
+  const handleAddToReadingList = (book: Book) => {
+    addToReadingList(book)
+    console.log('Added to reading list:', book.title)
+    // TODO: Add toast notification here
   }
 
   return (
@@ -228,13 +243,25 @@ export default function BookSearch() {
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex gap-3">
-                  <button className="btn-primary flex-1">
+                <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                  <motion.button 
+                    onClick={() => handleAddToWishlist(selectedBook)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="btn-primary flex-1 flex items-center justify-center gap-2"
+                  >
+                    <Star className="h-4 w-4" />
                     Add to Wishlist
-                  </button>
-                  <button className="btn-secondary flex-1">
+                  </motion.button>
+                  <motion.button 
+                    onClick={() => handleAddToReadingList(selectedBook)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="btn-secondary flex-1 flex items-center justify-center gap-2"
+                  >
+                    <BookOpen className="h-4 w-4" />
                     Add to Reading List
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </div>

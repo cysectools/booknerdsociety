@@ -3,22 +3,29 @@ import { motion } from 'framer-motion'
 import { Search, BookOpen, Star, Filter, X, Calendar, User, Globe } from 'lucide-react'
 import { booksService } from '../services/booksService'
 import { Book } from '../types'
+import { useBooksStore } from '../stores/booksStore'
 
 export default function Books() {
   const [searchQuery, setSearchQuery] = useState('')
   const [books, setBooks] = useState<Book[]>([])
+  const [filteredBooks, setFilteredBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<'all' | 'top-rated' | 'new-releases'>('all')
+  
+  const { addToWishlist, addToReadingList } = useBooksStore()
 
   const loadInitialBooks = async () => {
     setLoading(true)
     try {
       const initialBooks = await booksService.getRecommendedBooks(20)
       setBooks(initialBooks)
+      setFilteredBooks(initialBooks)
     } catch (error) {
       console.error('Error loading initial books:', error)
       setBooks([])
+      setFilteredBooks([])
     } finally {
       setLoading(false)
     }
@@ -31,12 +38,39 @@ export default function Books() {
     try {
       const searchResults = await booksService.searchBooks(searchQuery, 20)
       setBooks(searchResults)
+      setFilteredBooks(searchResults)
     } catch (error) {
       console.error('Search error:', error)
       setBooks([])
+      setFilteredBooks([])
     } finally {
       setLoading(false)
     }
+  }
+
+  const applyFilter = (filter: 'all' | 'top-rated' | 'new-releases') => {
+    setActiveFilter(filter)
+    
+    let filtered = [...books]
+    
+    switch (filter) {
+      case 'top-rated':
+        filtered = books.filter(book => (book.rating || 0) >= 4.5)
+        break
+      case 'new-releases':
+        const currentYear = new Date().getFullYear()
+        filtered = books.filter(book => {
+          const bookYear = parseInt(book.year || '0')
+          return bookYear >= currentYear - 2
+        })
+        break
+      case 'all':
+      default:
+        filtered = books
+        break
+    }
+    
+    setFilteredBooks(filtered)
   }
 
   const handleBookClick = (book: Book) => {
@@ -47,6 +81,18 @@ export default function Books() {
   const closeModal = () => {
     setShowModal(false)
     setSelectedBook(null)
+  }
+
+  const handleAddToWishlist = (book: Book) => {
+    addToWishlist(book)
+    console.log('Added to wishlist:', book.title)
+    // TODO: Add toast notification here
+  }
+
+  const handleAddToReadingList = (book: Book) => {
+    addToReadingList(book)
+    console.log('Added to reading list:', book.title)
+    // TODO: Add toast notification here
   }
 
   useEffect(() => {
@@ -114,18 +160,45 @@ export default function Books() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="flex flex-wrap gap-4 justify-center mb-12"
         >
-          <button className="glass-effect px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300">
+          <motion.button 
+            onClick={() => applyFilter('all')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`px-6 py-3 rounded-xl transition-all duration-300 ${
+              activeFilter === 'all' 
+                ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg' 
+                : 'glass-effect hover:scale-105'
+            }`}
+          >
             <Filter className="inline h-4 w-4 mr-2" />
             All Genres
-          </button>
-          <button className="glass-effect px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300">
+          </motion.button>
+          <motion.button 
+            onClick={() => applyFilter('top-rated')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`px-6 py-3 rounded-xl transition-all duration-300 ${
+              activeFilter === 'top-rated' 
+                ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg' 
+                : 'glass-effect hover:scale-105'
+            }`}
+          >
             <Star className="inline h-4 w-4 mr-2" />
             Top Rated
-          </button>
-          <button className="glass-effect px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300">
+          </motion.button>
+          <motion.button 
+            onClick={() => applyFilter('new-releases')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`px-6 py-3 rounded-xl transition-all duration-300 ${
+              activeFilter === 'new-releases' 
+                ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg' 
+                : 'glass-effect hover:scale-105'
+            }`}
+          >
             <BookOpen className="inline h-4 w-4 mr-2" />
             New Releases
-          </button>
+          </motion.button>
         </motion.div>
 
         {/* Books Grid */}
@@ -135,14 +208,21 @@ export default function Books() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
         >
-          {books.length === 0 ? (
+          {filteredBooks.length === 0 ? (
             <div className="col-span-full text-center py-12">
               <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-600 mb-2">No books found</h3>
-              <p className="text-gray-500">Try searching for a book to get started</p>
+              <p className="text-gray-500">
+                {activeFilter === 'top-rated' 
+                  ? 'No highly rated books found' 
+                  : activeFilter === 'new-releases' 
+                    ? 'No recent releases found' 
+                    : 'Try searching for a book to get started'
+                }
+              </p>
             </div>
           ) : (
-            books.map((book: any, index) => (
+            filteredBooks.map((book: any, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 30 }}
@@ -258,13 +338,25 @@ export default function Books() {
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex gap-3">
-                  <button className="btn-primary flex-1">
+                <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                  <motion.button 
+                    onClick={() => handleAddToWishlist(selectedBook)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="btn-primary flex-1 flex items-center justify-center gap-2"
+                  >
+                    <Star className="h-4 w-4" />
                     Add to Wishlist
-                  </button>
-                  <button className="btn-secondary flex-1">
+                  </motion.button>
+                  <motion.button 
+                    onClick={() => handleAddToReadingList(selectedBook)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="btn-secondary flex-1 flex items-center justify-center gap-2"
+                  >
+                    <BookOpen className="h-4 w-4" />
                     Add to Reading List
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </div>

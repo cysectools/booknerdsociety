@@ -192,19 +192,29 @@ The platform uses a modern design system with:
 
 ## 🚀 Deployment
 
-### Frontend (Vercel/Netlify)
+Ready to deploy to production? We've created comprehensive guides:
+
+- **[🚀 Quick Start Deployment](./QUICK_START_DEPLOYMENT.md)** - Deploy in ~20 minutes
+- **[📖 Full Deployment Guide](./DEPLOYMENT.md)** - Detailed instructions with all options
+- **[🔐 Environment Variables Setup](./ENV_SETUP.md)** - Complete configuration guide
+
+### Quick Deploy Summary
+
+**Frontend → Vercel**
 ```bash
-cd apps/frontend
-npm run build
-# Deploy dist/ folder
+npm install -g vercel
+vercel login
+vercel
 ```
 
-### Backend (Railway/Heroku/DigitalOcean)
+**Backend → Railway**
 ```bash
+npm install -g @railway/cli
 cd apps/backend
-npm run build
-# Deploy with environment variables
+railway init && railway up
 ```
+
+See the full guides above for step-by-step instructions, environment variable setup, and troubleshooting.
 
 ## 🤝 Contributing
 

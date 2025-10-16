@@ -152,62 +152,35 @@ const HomeAnimatedBackground: React.FC = () => {
   }, [])
 
   const getElementStyle = (element: HomeElement) => {
-    const baseStyle = {
-      position: 'absolute' as const,
+    // Dynamic styles that can't be converted to Tailwind classes
+    return {
       left: `${element.x}%`,
       top: `${element.y}%`,
       fontSize: `${element.size}px`,
       transform: `rotate(${element.rotation}deg)`,
-      pointerEvents: 'none' as const,
-      userSelect: 'none' as const,
     }
+  }
 
+  const getElementClasses = (element: HomeElement) => {
+    const baseClasses = "absolute pointer-events-none select-none"
+    
     switch (element.type) {
       case 'letter':
-        return {
-          ...baseStyle,
-          color: 'rgba(91, 33, 182, 0.03)',
-          fontWeight: 'bold',
-          fontFamily: 'serif',
-        }
+        return `${baseClasses} text-primary-600/3 font-bold font-serif`
       case 'book':
-        return {
-          ...baseStyle,
-          color: 'rgba(139, 69, 19, 0.02)',
-          fontWeight: 'bold',
-          fontFamily: 'serif',
-        }
+        return `${baseClasses} text-amber-800/2 font-bold font-serif`
       case 'quote':
-        return {
-          ...baseStyle,
-          color: 'rgba(75, 85, 99, 0.02)',
-          fontStyle: 'italic',
-          fontFamily: 'serif',
-          maxWidth: '180px',
-          textAlign: 'center' as const,
-        }
+        return `${baseClasses} text-gray-600/2 italic font-serif max-w-[180px] text-center`
       case 'star':
-        return {
-          ...baseStyle,
-          color: 'rgba(251, 191, 36, 0.04)',
-        }
+        return `${baseClasses} text-yellow-400/4`
       case 'heart':
-        return {
-          ...baseStyle,
-          color: 'rgba(239, 68, 68, 0.03)',
-        }
+        return `${baseClasses} text-red-500/3`
       case 'sparkle':
-        return {
-          ...baseStyle,
-          color: 'rgba(59, 130, 246, 0.04)',
-        }
+        return `${baseClasses} text-blue-500/4`
       case 'library':
-        return {
-          ...baseStyle,
-          color: 'rgba(34, 197, 94, 0.03)',
-        }
+        return `${baseClasses} text-green-500/3`
       default:
-        return baseStyle
+        return baseClasses
     }
   }
 
@@ -236,6 +209,7 @@ const HomeAnimatedBackground: React.FC = () => {
       {elements.map((element) => (
         <motion.div
           key={element.id}
+          className={getElementClasses(element)}
           style={getElementStyle(element)}
           variants={getAnimationVariants(element)}
           initial="initial"

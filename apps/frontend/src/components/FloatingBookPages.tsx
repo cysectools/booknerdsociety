@@ -10,7 +10,7 @@ interface FloatingPage {
   duration: number
   delay: number
   content: string
-  color: string
+  colorClass: string
 }
 
 const FloatingBookPages: React.FC = () => {
@@ -39,14 +39,14 @@ const FloatingBookPages: React.FC = () => {
     "The journey continues..."
   ]
 
-  const pageColors = [
-    'rgba(139, 69, 19, 0.08)', // Brown
-    'rgba(91, 33, 182, 0.06)', // Purple
-    'rgba(75, 85, 99, 0.05)', // Gray
-    'rgba(251, 191, 36, 0.07)', // Gold
-    'rgba(239, 68, 68, 0.06)', // Red
-    'rgba(34, 197, 94, 0.05)', // Green
-    'rgba(59, 130, 246, 0.06)', // Blue
+  const pageColorClasses = [
+    'bg-amber-800/8', // Brown
+    'bg-primary-600/6', // Purple
+    'bg-gray-600/5', // Gray
+    'bg-yellow-400/7', // Gold
+    'bg-red-500/6', // Red
+    'bg-green-500/5', // Green
+    'bg-blue-500/6', // Blue
   ]
 
   useEffect(() => {
@@ -63,7 +63,7 @@ const FloatingBookPages: React.FC = () => {
           duration: Math.random() * 25 + 20,
           delay: Math.random() * 10,
           content: bookContent[Math.floor(Math.random() * bookContent.length)],
-          color: pageColors[Math.floor(Math.random() * pageColors.length)]
+          colorClass: pageColorClasses[Math.floor(Math.random() * pageColorClasses.length)]
         })
       }
       
@@ -102,13 +102,7 @@ const FloatingBookPages: React.FC = () => {
             ease: "easeInOut",
           }}
         >
-          <div
-            className="w-32 h-40 rounded-lg shadow-lg border-2 border-white/20 backdrop-blur-sm"
-            style={{
-              backgroundColor: page.color,
-              background: `linear-gradient(135deg, ${page.color}, ${page.color}dd)`,
-            }}
-          >
+          <div className={`w-32 h-40 rounded-lg shadow-lg border-2 border-white/20 backdrop-blur-sm ${page.colorClass}`}>
             <div className="p-3 h-full flex flex-col justify-center items-center text-center">
               <div className="text-xs font-serif text-gray-600/60 leading-relaxed">
                 {page.content}

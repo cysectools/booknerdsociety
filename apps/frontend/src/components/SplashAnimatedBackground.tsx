@@ -137,61 +137,37 @@ const SplashAnimatedBackground: React.FC = () => {
   }, [])
 
   const getElementStyle = (element: SplashElement) => {
-    const baseStyle = {
-      position: 'absolute' as const,
+    // Dynamic styles that can't be converted to Tailwind classes
+    return {
       left: `${element.x}%`,
       top: `${element.y}%`,
       fontSize: `${element.size}px`,
       transform: `rotate(${element.rotation}deg)`,
-      pointerEvents: 'none' as const,
-      userSelect: 'none' as const,
-    }
-
-    switch (element.type) {
-      case 'letter':
-        return {
-          ...baseStyle,
-          color: 'rgba(91, 33, 182, 0.15)',
-          fontWeight: 'bold',
-          fontFamily: 'serif',
-        }
-      case 'book':
-        return {
-          ...baseStyle,
-          color: 'rgba(139, 69, 19, 0.12)',
-          fontWeight: 'bold',
-          fontFamily: 'serif',
-        }
-      case 'quote':
-        return {
-          ...baseStyle,
-          color: 'rgba(75, 85, 99, 0.08)',
-          fontStyle: 'italic',
-          fontFamily: 'serif',
-          maxWidth: '200px',
-          textAlign: 'center' as const,
-        }
-      case 'star':
-        return {
-          ...baseStyle,
-          color: 'rgba(251, 191, 36, 0.20)',
-        }
-      case 'heart':
-        return {
-          ...baseStyle,
-          color: 'rgba(239, 68, 68, 0.15)',
-        }
-      case 'sparkle':
-        return {
-          ...baseStyle,
-          color: 'rgba(59, 130, 246, 0.18)',
-        }
-      default:
-        return baseStyle
     }
   }
 
-  const getAnimationVariants = (element: SplashElement) => ({
+  const getElementClasses = (element: SplashElement) => {
+    const baseClasses = "absolute pointer-events-none select-none"
+    
+    switch (element.type) {
+      case 'letter':
+        return `${baseClasses} text-primary-600/15 font-bold font-serif`
+      case 'book':
+        return `${baseClasses} text-amber-800/12 font-bold font-serif`
+      case 'quote':
+        return `${baseClasses} text-gray-600/8 italic font-serif max-w-[200px] text-center`
+      case 'star':
+        return `${baseClasses} text-yellow-400/20`
+      case 'heart':
+        return `${baseClasses} text-red-500/15`
+      case 'sparkle':
+        return `${baseClasses} text-blue-500/18`
+      default:
+        return baseClasses
+    }
+  }
+
+  const getAnimationVariants = (_element: SplashElement) => ({
     initial: {
       opacity: 0,
       scale: 0.3,
@@ -204,12 +180,6 @@ const SplashAnimatedBackground: React.FC = () => {
       y: [100, -100, 50, -150, 200],
       x: [-50, 50, -30, 80, -100],
       rotate: [0, 180, 360, 540, 720],
-    },
-    transition: {
-      duration: element.duration,
-      delay: element.delay,
-      repeat: Infinity,
-      ease: "easeInOut",
     }
   })
 
@@ -222,10 +192,17 @@ const SplashAnimatedBackground: React.FC = () => {
       {elements.map((element) => (
         <motion.div
           key={element.id}
+          className={getElementClasses(element)}
           style={getElementStyle(element)}
           variants={getAnimationVariants(element)}
           initial="initial"
           animate="animate"
+          transition={{
+            duration: element.duration,
+            delay: element.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
         >
           {element.type === 'star' && <Star className="w-full h-full" />}
           {element.type === 'heart' && <Heart className="w-full h-full" />}

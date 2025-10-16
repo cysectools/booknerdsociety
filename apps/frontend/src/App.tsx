@@ -1,4 +1,3 @@
-import React from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
 import { useEffect, useState } from 'react'

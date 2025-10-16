@@ -1,16 +1,20 @@
 import { Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
+import jwt, { SignOptions } from 'jsonwebtoken'
 import { User } from '../models/User'
 import { validationResult } from 'express-validator'
 
-const generateToken = (userId: string) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-  })
+const generateToken = (userId: string): string => {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET is not defined')
+  }
+  return jwt.sign({ userId }, secret, {
+    expiresIn: (process.env.JWT_EXPIRES_IN as string | undefined) || '7d'
+  } as SignOptions)
 }
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (req: Request, res: Response): Promise<Response | void> => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -46,7 +50,7 @@ export const register = async (req: Request, res: Response) => {
     await user.save()
 
     // Generate token
-    const token = generateToken(user._id.toString())
+    const token = generateToken(String(user._id))
 
     res.status(201).json({
       success: true,
@@ -73,7 +77,7 @@ export const register = async (req: Request, res: Response) => {
   }
 }
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<Response | void> => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -105,7 +109,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Generate token
-    const token = generateToken(user._id.toString())
+    const token = generateToken(String(user._id))
 
     res.json({
       success: true,
@@ -132,7 +136,7 @@ export const login = async (req: Request, res: Response) => {
   }
 }
 
-export const getCurrentUser = async (req: Request, res: Response) => {
+export const getCurrentUser = async (req: Request, res: Response): Promise<Response | void> => {
   try {
     const user = await User.findById(req.userId)
     if (!user) {
@@ -163,7 +167,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   }
 }
 
-export const refreshToken = async (req: Request, res: Response) => {
+export const refreshToken = async (req: Request, res: Response): Promise<Response | void> => {
   try {
     const { token } = req.body
     if (!token) {

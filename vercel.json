@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd apps/frontend && npm install && npm run build",
+  "outputDirectory": "apps/frontend/dist",
+  "framework": "vite",
+  "installCommand": "cd apps/frontend && npm install",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./apps/frontend"
+}
+

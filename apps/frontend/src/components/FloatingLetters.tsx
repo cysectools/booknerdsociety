@@ -10,7 +10,7 @@ interface FloatingLetter {
   rotation: number
   duration: number
   delay: number
-  color: string
+  colorClass: string
 }
 
 const FloatingLetters: React.FC = () => {
@@ -19,14 +19,14 @@ const FloatingLetters: React.FC = () => {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   const bookWords = ['READ', 'BOOK', 'STORY', 'PAGE', 'TALE', 'NOVEL', 'POEM', 'PROSE', 'VERSE', 'LORE', 'MYTH', 'EPIC', 'SONG', 'RHYME', 'DREAM', 'MAGIC', 'WISDOM', 'KNOWLEDGE', 'ADVENTURE', 'MYSTERY', 'ROMANCE', 'FANTASY', 'SCIENCE', 'HISTORY', 'PHILOSOPHY', 'LITERATURE']
 
-  const letterColors = [
-    'rgba(91, 33, 182, 0.12)', // Purple
-    'rgba(139, 69, 19, 0.10)', // Brown
-    'rgba(75, 85, 99, 0.08)', // Gray
-    'rgba(251, 191, 36, 0.11)', // Gold
-    'rgba(239, 68, 68, 0.09)', // Red
-    'rgba(34, 197, 94, 0.08)', // Green
-    'rgba(59, 130, 246, 0.10)', // Blue
+  const letterColorClasses = [
+    'text-primary-600/12', // Purple
+    'text-amber-800/10', // Brown
+    'text-gray-600/8', // Gray
+    'text-yellow-400/11', // Gold
+    'text-red-500/9', // Red
+    'text-green-500/8', // Green
+    'text-blue-500/10', // Blue
   ]
 
   useEffect(() => {
@@ -44,7 +44,7 @@ const FloatingLetters: React.FC = () => {
           rotation: Math.random() * 360,
           duration: Math.random() * 20 + 15,
           delay: Math.random() * 8,
-          color: letterColors[Math.floor(Math.random() * letterColors.length)]
+          colorClass: letterColorClasses[Math.floor(Math.random() * letterColorClasses.length)]
         })
       }
 
@@ -61,7 +61,7 @@ const FloatingLetters: React.FC = () => {
             rotation: Math.random() * 360,
             duration: Math.random() * 25 + 20,
             delay: Math.random() * 10,
-            color: letterColors[Math.floor(Math.random() * letterColors.length)]
+            colorClass: letterColorClasses[Math.floor(Math.random() * letterColorClasses.length)]
           })
         }
       }
@@ -81,12 +81,11 @@ const FloatingLetters: React.FC = () => {
       {letters.map((letter) => (
         <motion.div
           key={letter.id}
-          className="absolute font-serif font-bold select-none"
+          className={`absolute font-serif font-bold select-none ${letter.colorClass}`}
           style={{
             left: `${letter.x}%`,
             top: `${letter.y}%`,
             fontSize: `${letter.size}px`,
-            color: letter.color,
             transform: `rotate(${letter.rotation}deg)`,
           }}
           animate={{

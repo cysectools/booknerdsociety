@@ -125,52 +125,31 @@ const AnimatedBackground: React.FC = () => {
   }, [])
 
   const getElementStyle = (element: FloatingElement) => {
-    const baseStyle = {
-      position: 'absolute' as const,
+    // Dynamic styles that can't be converted to Tailwind classes
+    return {
       left: `${element.x}%`,
       top: `${element.y}%`,
       fontSize: `${element.size}px`,
       transform: `rotate(${element.rotation}deg)`,
-      pointerEvents: 'none' as const,
-      userSelect: 'none' as const,
     }
+  }
 
+  const getElementClasses = (element: FloatingElement) => {
+    const baseClasses = "absolute pointer-events-none select-none"
+    
     switch (element.type) {
       case 'letter':
-        return {
-          ...baseStyle,
-          color: 'rgba(91, 33, 182, 0.1)',
-          fontWeight: 'bold',
-          fontFamily: 'serif',
-        }
+        return `${baseClasses} text-primary-600/10 font-bold font-serif`
       case 'book':
-        return {
-          ...baseStyle,
-          color: 'rgba(139, 69, 19, 0.08)',
-          fontWeight: 'bold',
-          fontFamily: 'serif',
-        }
+        return `${baseClasses} text-amber-800/8 font-bold font-serif`
       case 'quote':
-        return {
-          ...baseStyle,
-          color: 'rgba(75, 85, 99, 0.06)',
-          fontStyle: 'italic',
-          fontFamily: 'serif',
-          maxWidth: '200px',
-          textAlign: 'center' as const,
-        }
+        return `${baseClasses} text-gray-600/6 italic font-serif max-w-[200px] text-center`
       case 'star':
-        return {
-          ...baseStyle,
-          color: 'rgba(251, 191, 36, 0.15)',
-        }
+        return `${baseClasses} text-yellow-400/15`
       case 'heart':
-        return {
-          ...baseStyle,
-          color: 'rgba(239, 68, 68, 0.12)',
-        }
+        return `${baseClasses} text-red-500/12`
       default:
-        return baseStyle
+        return baseClasses
     }
   }
 
@@ -205,6 +184,7 @@ const AnimatedBackground: React.FC = () => {
       {elements.map((element) => (
         <motion.div
           key={element.id}
+          className={getElementClasses(element)}
           style={getElementStyle(element)}
           variants={getAnimationVariants(element)}
           initial="initial"

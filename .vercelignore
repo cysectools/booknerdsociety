@@ -1,12 +1,7 @@
-node_modules
 .git
-apps/backend
-packages
-shared
+apps/backend/
+packages/
+shared/
 *.log
-.env
-.env.local
 .DS_Store
-*.md
-!apps/frontend/**
 

@@ -3,10 +3,6 @@
   "version": "1.0.0",
   "description": "Professional BookNerdSociety Platform",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd apps/frontend && npm run dev",

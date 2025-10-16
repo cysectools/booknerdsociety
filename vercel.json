@@ -1,9 +1,22 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm install --prefix apps/frontend && npm run build --prefix apps/frontend",
-  "devCommand": "npm run dev --prefix apps/frontend",
-  "installCommand": "npm install --prefix apps/frontend",
-  "framework": "vite",
-  "outputDirectory": "apps/frontend/dist"
+  "version": 2,
+  "builds": [
+    {
+      "src": "apps/frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/apps/frontend/dist/$1"
+    }
+  ]
 }
 

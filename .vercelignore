@@ -1,7 +1,0 @@
-.git
-apps/backend/
-packages/
-shared/
-*.log
-.DS_Store
-

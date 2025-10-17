@@ -203,7 +203,7 @@ class EnhancedBooksService {
       // Filter for books with ratings >= 4.0
       const books = (data.items || [])
         .map(this.transformGoogleBook)
-        .filter(book => book.rating >= 4.0)
+        .filter(book => (book.rating ?? 0) >= 4.0)
       
       const totalItems = data.totalItems || 0
       const nextStartIndex = startIndex + maxResults
